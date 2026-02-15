@@ -1,7 +1,7 @@
 pkgname=koala-clash
 pkgver=1.0.0
 pkgrel=1
-pkgdesc="A geeked Mihomo client with features to improved users' experience."
+pkgdesc="A geeked Mihomo client with features that improve the user experience."
 arch=('x86_64' 'aarch64')
 url="https://github.com/coolcoala/koala-clash"
 license=('GPL3')
