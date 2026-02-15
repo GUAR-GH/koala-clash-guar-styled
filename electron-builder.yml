@@ -23,7 +23,7 @@ protocols:
   schemes:
     - 'clash'
     - 'mihomo'
-    - 'sparkle'
+    - 'koala-clash'
 win:
   target:
     - nsis
@@ -57,7 +57,7 @@ linux:
   desktop:
     entry:
       Name: Koala Clash
-      MimeType: 'x-scheme-handler/clash;x-scheme-handler/mihomo;x-scheme-handler/sparkle'
+      MimeType: 'x-scheme-handler/clash;x-scheme-handler/mihomo;x-scheme-handler/koala-clash'
   target:
     - deb
     - rpm
