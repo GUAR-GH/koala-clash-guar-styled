@@ -167,11 +167,23 @@ export async function createProfile(item: Partial<ProfileItem>): Promise<Profile
 
       const data = res.data
       const headers = res.headers
-      const contentDispositionKey = Object.keys(headers).find((k) =>
-        k.toLowerCase().endsWith('content-disposition')
+      const profileTitleKey = Object.keys(headers).find((k) =>
+        k.toLowerCase().endsWith('profile-title')
       )
-      if (contentDispositionKey && newItem.name === 'Remote File') {
-        newItem.name = parseFilename(headers[contentDispositionKey])
+      if (profileTitleKey) {
+        const titleValue = headers[profileTitleKey]
+        if (titleValue.startsWith('base64:')) {
+          newItem.name = Buffer.from(titleValue.slice(7), 'base64').toString('utf-8')
+        } else {
+          newItem.name = titleValue
+        }
+      } else {
+        const contentDispositionKey = Object.keys(headers).find((k) =>
+          k.toLowerCase().endsWith('content-disposition')
+        )
+        if (contentDispositionKey && newItem.name === 'Remote File') {
+          newItem.name = parseFilename(headers[contentDispositionKey])
+        }
       }
       const homeKey = Object.keys(headers).find((k) =>
         k.toLowerCase().endsWith('profile-web-page-url')
@@ -193,6 +205,12 @@ export async function createProfile(item: Partial<ProfileItem>): Promise<Profile
       )
       if (userinfoKey) {
         newItem.extra = parseSubinfo(headers[userinfoKey])
+      }
+      const logoKey = Object.keys(headers).find((k) =>
+        k.toLowerCase().endsWith('profile-logo')
+      )
+      if (logoKey) {
+        newItem.logo = headers[logoKey]
       }
       const announceKey = Object.keys(headers).find((k) =>
         k.toLowerCase().endsWith('announce')

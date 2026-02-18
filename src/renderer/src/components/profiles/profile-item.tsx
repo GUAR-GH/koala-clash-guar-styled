@@ -413,9 +413,9 @@ const ProfileItem: React.FC<Props> = (props) => {
                   : 'bg-muted/50'
               )}
             >
-              {info.home ? (
+              {info.logo || info.home ? (
                 <img
-                  src={`https://www.google.com/s2/favicons?domain=${new URL(info.home).hostname}&sz=32`}
+                  src={info.logo || `https://www.google.com/s2/favicons?domain=${new URL(info.home!).hostname}&sz=32`}
                   alt=""
                   className="w-4.5 h-4.5 rounded-sm"
                   onError={(e) => {

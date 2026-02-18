@@ -136,9 +136,9 @@ const Home: React.FC = () => {
         {currentProfile && (
           <div className="rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-4">
             <div className="flex items-center justify-center gap-3 mb-2">
-              {currentProfile.home && (
+              {(currentProfile.logo || currentProfile.home) && (
                 <img
-                  src={`https://www.google.com/s2/favicons?domain=${new URL(currentProfile.home).hostname}&sz=32`}
+                  src={currentProfile.logo || `https://www.google.com/s2/favicons?domain=${new URL(currentProfile.home!).hostname}&sz=32`}
                   alt=""
                   className="w-10 h-10 rounded-full"
                   onError={(e) => {
