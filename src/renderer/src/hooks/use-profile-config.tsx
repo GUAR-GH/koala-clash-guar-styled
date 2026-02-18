@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useEffect } from 'react'
+import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
 import {
@@ -18,6 +18,8 @@ interface ProfileConfigContextType {
   updateProfileItem: (item: ProfileItem) => Promise<void>
   removeProfileItem: (id: string) => Promise<void>
   changeCurrentProfile: (id: string) => Promise<void>
+  hwidLimitError: string | null
+  clearHwidLimitError: () => void
 }
 
 const ProfileConfigContext = createContext<ProfileConfigContextType | undefined>(undefined)
@@ -26,6 +28,9 @@ export const ProfileConfigProvider: React.FC<{ children: ReactNode }> = ({ child
   const { data: profileConfig, mutate: mutateProfileConfig } = useSWR('getProfileConfig', () =>
     getProfileConfig()
   )
+  const [hwidLimitError, setHwidLimitError] = useState<string | null>(null)
+
+  const clearHwidLimitError = useCallback(() => setHwidLimitError(null), [])
 
   const setProfileConfig = async (config: ProfileConfig): Promise<void> => {
     try {
@@ -42,7 +47,12 @@ export const ProfileConfigProvider: React.FC<{ children: ReactNode }> = ({ child
     try {
       await add(item)
     } catch (e) {
-      toast.error(`${e}`)
+      if (`${e}`.includes('HWID_LIMIT')) {
+        const match = `${e}`.match(/HWID_LIMIT:(.*)/)
+        setHwidLimitError(match?.[1] ?? '')
+      } else {
+        toast.error(`${e}`)
+      }
     } finally {
       mutateProfileConfig()
       window.electron.ipcRenderer.send('updateTrayMenu')
@@ -100,7 +110,9 @@ export const ProfileConfigProvider: React.FC<{ children: ReactNode }> = ({ child
         addProfileItem,
         removeProfileItem,
         updateProfileItem,
-        changeCurrentProfile
+        changeCurrentProfile,
+        hwidLimitError,
+        clearHwidLimitError
       }}
     >
       {children}

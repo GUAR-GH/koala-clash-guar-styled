@@ -167,6 +167,16 @@ export async function createProfile(item: Partial<ProfileItem>): Promise<Profile
 
       const data = res.data
       const headers = res.headers
+      const hwidLimitKey = Object.keys(headers).find((k) =>
+        k.toLowerCase().endsWith('x-hwid-limit')
+      )
+      if (hwidLimitKey && headers[hwidLimitKey] === 'true') {
+        const hwidSupportKey = Object.keys(headers).find((k) =>
+          k.toLowerCase().endsWith('support-url')
+        )
+        const hwidSupportUrl = hwidSupportKey ? headers[hwidSupportKey] : ''
+        throw new Error(`HWID_LIMIT:${hwidSupportUrl}`)
+      }
       const profileTitleKey = Object.keys(headers).find((k) =>
         k.toLowerCase().endsWith('profile-title')
       )
@@ -211,6 +221,12 @@ export async function createProfile(item: Partial<ProfileItem>): Promise<Profile
       )
       if (logoKey) {
         newItem.logo = headers[logoKey]
+      }
+      const supportUrlKey = Object.keys(headers).find((k) =>
+        k.toLowerCase().endsWith('support-url')
+      )
+      if (supportUrlKey) {
+        newItem.supportUrl = headers[supportUrlKey]
       }
       const announceKey = Object.keys(headers).find((k) =>
         k.toLowerCase().endsWith('announce')

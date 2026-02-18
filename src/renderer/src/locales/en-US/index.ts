@@ -185,7 +185,10 @@ export default {
       openInBrowser: 'Open in browser',
       emptyTitle: 'No profiles yet',
       emptyDescription: 'Add a profile to get started',
-      dropFileHint: 'Drop config file here'
+      dropFileHint: 'Drop config file here',
+      hwidLimitTitle: 'Device limit exceeded',
+      hwidLimitDescription: 'The maximum device limit for this subscription has been reached. The subscription was not added or updated.',
+      support: 'Support'
     },
     proxies: {
       title: 'Proxy Groups',
@@ -704,6 +707,7 @@ export default {
     importRemoteConfig: 'Import Remote Config',
     longTermValid: 'Long-term Valid',
     homepage: 'Homepage',
+    support: 'Support',
     showDate: 'Show Date',
     subscriptionUA: 'Subscription User Agent',
     dateUpdated: 'Updated time',

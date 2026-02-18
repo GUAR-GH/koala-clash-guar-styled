@@ -223,7 +223,10 @@ export default {
       openInBrowser: '在浏览器中打开',
       emptyTitle: '暂无订阅',
       emptyDescription: '添加订阅以开始使用',
-      dropFileHint: '将配置文件拖放到此处'
+      dropFileHint: '将配置文件拖放到此处',
+      hwidLimitTitle: '设备数量超限',
+      hwidLimitDescription: '此订阅已达到最大设备数量限制。订阅未添加或更新。',
+      support: '支持'
     },
     proxies: {
       title: '代理组',
@@ -727,6 +730,7 @@ export default {
     importRemoteConfig: '导入远程配置',
     longTermValid: '长期有效',
     homepage: '主页',
+    support: '技术支持',
     showDate: '显示日期',
     subscriptionUA: '订阅拉取 UA',
     dateUpdated: '更新时间',

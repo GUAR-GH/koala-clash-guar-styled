@@ -283,6 +283,14 @@ const ProfileItem: React.FC<Props> = (props) => {
         variant: 'destructive'
       } as MenuItem
     ]
+    if (info.supportUrl) {
+      list.unshift({
+        key: 'support',
+        label: t('profile.support'),
+        showDivider: false,
+        variant: 'default'
+      } as MenuItem)
+    }
     if (info.home) {
       list.unshift({
         key: 'home',
@@ -318,6 +326,10 @@ const ProfileItem: React.FC<Props> = (props) => {
       }
       case 'home': {
         open(info.home)
+        break
+      }
+      case 'support': {
+        open(info.supportUrl)
         break
       }
     }

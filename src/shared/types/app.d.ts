@@ -126,6 +126,7 @@ interface ProfileItem {
   autoUpdate?: boolean
   announce?: string
   logo?: string
+  supportUrl?: string
 }
 
 interface SubscriptionUserInfo {

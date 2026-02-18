@@ -183,7 +183,10 @@ export default {
       openInBrowser: 'Открыть в браузере',
       emptyTitle: 'Профилей пока нет',
       emptyDescription: 'Добавьте профиль, чтобы начать',
-      dropFileHint: 'Перетащите файл конфигурации сюда'
+      dropFileHint: 'Перетащите файл конфигурации сюда',
+      hwidLimitTitle: 'Лимит устройств превышен',
+      hwidLimitDescription: 'Достигнут максимальный лимит устройств для данной подписки. Подписка не была добавлена или обновлена.',
+      support: 'Поддержка'
     },
     proxies: {
       title: 'Группы прокси',
@@ -688,6 +691,7 @@ export default {
     importRemoteConfig: 'Импорт удалённой конфигурации',
     longTermValid: 'Действует бессрочно',
     homepage: 'Домашняя страница',
+    support: 'Поддержка',
     showDate: 'Показывать дату',
     subscriptionUA: 'User-Agent для загрузки подписки',
     dateUpdated: 'Время обновления',
