@@ -44,7 +44,6 @@ const ConnectionSettingModal: React.FC<Props> = (props) => {
         <div className="flex flex-col gap-1 py-2">
           <SettingItem title={t('connection.showAppIcon')} divider>
             <Switch
-              size="sm"
               checked={displayIcon}
               onCheckedChange={(v) => {
                 patchAppConfig({ displayIcon: v })
@@ -53,7 +52,6 @@ const ConnectionSettingModal: React.FC<Props> = (props) => {
           </SettingItem>
           <SettingItem title={t('connection.showAppName')} divider>
             <Switch
-              size="sm"
               checked={displayAppName}
               onCheckedChange={(v) => {
                 patchAppConfig({ displayAppName: v })

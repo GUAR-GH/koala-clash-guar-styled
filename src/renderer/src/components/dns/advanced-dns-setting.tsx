@@ -64,7 +64,6 @@ const AdvancedDnsSetting: React.FC<AdvancedDnsSettingProps> = ({
     <SettingCard title={t('dns.moreSettings')}>
       <SettingItem title={t('dns.connectionRespectRules')} divider>
         <Switch
-          size="sm"
           checked={respectRules}
           disabled={proxyServerNameserver.length === 0}
           onCheckedChange={onRespectRulesChange}
@@ -163,10 +162,10 @@ const AdvancedDnsSetting: React.FC<AdvancedDnsSettingProps> = ({
         objectMode="record"
       />
       <SettingItem title={t('dns.useSystemHosts')} divider>
-        <Switch size="sm" checked={useSystemHosts} onCheckedChange={onUseSystemHostsChange} />
+        <Switch checked={useSystemHosts} onCheckedChange={onUseSystemHostsChange} />
       </SettingItem>
       <SettingItem title={t('dns.customHosts')}>
-        <Switch size="sm" checked={useHosts} onCheckedChange={onUseHostsChange} />
+        <Switch checked={useHosts} onCheckedChange={onUseHostsChange} />
       </SettingItem>
       {useHosts && (
         <EditableList

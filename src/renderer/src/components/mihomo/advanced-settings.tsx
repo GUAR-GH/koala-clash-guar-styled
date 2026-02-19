@@ -64,7 +64,6 @@ const AdvancedSetting: React.FC = () => {
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.storeSelected')} divider>
         <Switch
-          size="sm"
           checked={storeSelected}
           onCheckedChange={(value) => {
             onChangeNeedRestart({ profile: { 'store-selected': value } })
@@ -73,7 +72,6 @@ const AdvancedSetting: React.FC = () => {
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.storeFakeIP')} divider>
         <Switch
-          size="sm"
           checked={storeFakeIp}
           onCheckedChange={(value) => {
             onChangeNeedRestart({ profile: { 'store-fake-ip': value } })
@@ -95,7 +93,6 @@ const AdvancedSetting: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={unifiedDelay}
           onCheckedChange={(value) => {
             onChangeNeedRestart({ 'unified-delay': value })
@@ -117,7 +114,6 @@ const AdvancedSetting: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={tcpConcurrent}
           onCheckedChange={(value) => {
             onChangeNeedRestart({ 'tcp-concurrent': value })
@@ -126,7 +122,6 @@ const AdvancedSetting: React.FC = () => {
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.disableTCPKeepAlive')} divider>
         <Switch
-          size="sm"
           checked={disableKeepAlive}
           onCheckedChange={(value) => {
             onChangeNeedRestart({ 'disable-keep-alive': value })

@@ -96,7 +96,6 @@ const ProfileSettingModal: React.FC<Props> = (props) => {
             divider
           >
             <Switch
-              size="sm"
               checked={diffWorkDir}
               onCheckedChange={(v) => {
                 patchAppConfig({ diffWorkDir: v })

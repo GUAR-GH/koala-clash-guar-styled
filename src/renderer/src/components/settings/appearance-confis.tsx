@@ -98,7 +98,6 @@ const AppearanceConfig: React.FC = () => {
           divider
         >
           <Switch
-            size="sm"
             checked={localShowFloating}
             onCheckedChange={async (value) => {
               if (timeoutRef.current) {
@@ -126,7 +125,6 @@ const AppearanceConfig: React.FC = () => {
           <>
             <SettingItem title={t('settings.appearance.rotateFloatingIcon')} divider>
               <Switch
-                size="sm"
                 checked={spinFloatingIcon}
                 onCheckedChange={async (value) => {
                   await patchAppConfig({ spinFloatingIcon: value })
@@ -136,7 +134,6 @@ const AppearanceConfig: React.FC = () => {
             </SettingItem>
             <SettingItem title={t('settings.appearance.disableTrayIcon')} divider>
               <Switch
-                size="sm"
                 checked={disableTray}
                 onCheckedChange={async (value) => {
                   await patchAppConfig({ disableTray: value })
@@ -154,7 +151,6 @@ const AppearanceConfig: React.FC = () => {
           <>
             <SettingItem title={t('settings.appearance.trayShowNodeInfo')} divider>
               <Switch
-                size="sm"
                 checked={proxyInTray}
                 onCheckedChange={async (value) => {
                   await patchAppConfig({ proxyInTray: value })
@@ -167,7 +163,6 @@ const AppearanceConfig: React.FC = () => {
           <>
             <SettingItem title={t('settings.appearance.showDockIcon')} divider>
               <Switch
-                size="sm"
                 checked={useDockIcon}
                 onCheckedChange={async (value) => {
                   await patchAppConfig({ useDockIcon: value })
@@ -179,7 +174,6 @@ const AppearanceConfig: React.FC = () => {
         )}
         <SettingItem title={t('settings.appearance.useSystemTitleBar')} divider>
           <Switch
-            size="sm"
             checked={useWindowFrame}
             onCheckedChange={async (value) => {
               await patchAppConfig({ useWindowFrame: value })

@@ -210,7 +210,6 @@ const Sysproxy: React.FC = () => {
               divider
             >
               <Switch
-                size="sm"
                 checked={onlyActiveDevice}
                 disabled={!values.settingMode || values.settingMode !== 'service'}
                 onCheckedChange={(value) => {

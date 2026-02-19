@@ -225,7 +225,6 @@ const PortSetting: React.FC = () => {
           divider
         >
           <Switch
-            size="sm"
             checked={allowLan}
             onCheckedChange={(v) => {
               onChangeNeedRestart({ 'allow-lan': v })

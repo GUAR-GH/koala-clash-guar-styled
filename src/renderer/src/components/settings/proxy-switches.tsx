@@ -52,7 +52,6 @@ const ProxySwitches: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={tun?.enable}
           onCheckedChange={async (enable: boolean) => {
             if (enable) {
@@ -79,7 +78,6 @@ const ProxySwitches: React.FC = () => {
         }
       >
         <Switch
-          size="sm"
           checked={sysProxyEnable}
           disabled={mode == 'manual' && sysProxyDisabled}
           onCheckedChange={async (enable: boolean) => {

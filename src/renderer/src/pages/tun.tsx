@@ -154,7 +154,6 @@ const Tun: React.FC = () => {
               </SettingItem>
               <SettingItem title={t('pages.tun.strictRoute')} divider>
                 <Switch
-                  size="sm"
                   checked={values.strictRoute}
                   onCheckedChange={(value) => {
                     setValues({ ...values, strictRoute: value })
@@ -165,7 +164,6 @@ const Tun: React.FC = () => {
           )}
           <SettingItem title={t('pages.tun.autoSetRouteRules')} divider>
             <Switch
-              size="sm"
               checked={values.autoRoute}
               onCheckedChange={(value) => {
                 setValues({ ...values, autoRoute: value })
@@ -175,7 +173,6 @@ const Tun: React.FC = () => {
           {platform === 'linux' && (
             <SettingItem title={t('pages.tun.autoSetTCPRedirect')} divider>
               <Switch
-                size="sm"
                 checked={values.autoRedirect}
                 onCheckedChange={(value) => {
                   setValues({ ...values, autoRedirect: value })
@@ -185,7 +182,6 @@ const Tun: React.FC = () => {
           )}
           <SettingItem title={t('pages.tun.autoSelectTrafficExit')} divider>
             <Switch
-              size="sm"
               checked={values.autoDetectInterface}
               onCheckedChange={(value) => {
                 setValues({ ...values, autoDetectInterface: value })
@@ -194,7 +190,6 @@ const Tun: React.FC = () => {
           </SettingItem>
           <SettingItem title={t('pages.tun.icmpForwarding')} divider>
             <Switch
-              size="sm"
               checked={!values.disableIcmpForwarding}
               onCheckedChange={(value) => {
                 setValues({ ...values, disableIcmpForwarding: !value })

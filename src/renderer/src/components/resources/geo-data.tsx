@@ -162,7 +162,6 @@ const GeoData: React.FC = () => {
         divider={geoAutoUpdate}
       >
         <Switch
-          size="sm"
           checked={geoAutoUpdate}
           onCheckedChange={(value) => {
             patchControledMihomoConfig({ 'geo-auto-update': value })

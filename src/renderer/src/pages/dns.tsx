@@ -160,7 +160,6 @@ const DNS: React.FC = () => {
       <SettingCard>
         <SettingItem title={t('pages.dns.ipv6')} divider>
           <Switch
-            size="sm"
             checked={values.ipv6}
             onCheckedChange={(v) => {
               setValues({ ...values, ipv6: v })

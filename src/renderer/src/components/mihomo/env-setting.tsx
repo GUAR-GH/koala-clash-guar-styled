@@ -36,7 +36,6 @@ const EnvSetting: React.FC = () => {
     <SettingCard title={t('mihomo.envSettings.environmentVariables')}>
       <SettingItem title={t('mihomo.envSettings.disableSystemCA')} divider>
         <Switch
-          size="sm"
           checked={disableSystemCA}
           onCheckedChange={(v) => {
             handleConfigChangeWithRestart('disableSystemCA', v)
@@ -45,7 +44,6 @@ const EnvSetting: React.FC = () => {
       </SettingItem>
       <SettingItem title={t('mihomo.envSettings.disableBuiltinCA')} divider>
         <Switch
-          size="sm"
           checked={disableEmbedCA}
           onCheckedChange={(v) => {
             handleConfigChangeWithRestart('disableEmbedCA', v)
@@ -54,7 +52,6 @@ const EnvSetting: React.FC = () => {
       </SettingItem>
       <SettingItem title={t('mihomo.envSettings.disableLoopbackDetection')} divider>
         <Switch
-          size="sm"
           checked={disableLoopbackDetector}
           onCheckedChange={(v) => {
             handleConfigChangeWithRestart('disableLoopbackDetector', v)
@@ -64,7 +61,6 @@ const EnvSetting: React.FC = () => {
       {platform == 'linux' && (
         <SettingItem title={t('mihomo.envSettings.disableNftables')} divider>
           <Switch
-            size="sm"
             checked={disableNftables}
             onCheckedChange={(v) => {
               handleConfigChangeWithRestart('disableNftables', v)

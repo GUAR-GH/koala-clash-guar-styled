@@ -399,7 +399,6 @@ const Mihomo: React.FC = () => {
         </SettingItem>
         <SettingItem title="IPv6" divider>
           <Switch
-            size="sm"
             checked={ipv6}
             onCheckedChange={(v) => onChangeNeedRestart({ ipv6: v })}
           />

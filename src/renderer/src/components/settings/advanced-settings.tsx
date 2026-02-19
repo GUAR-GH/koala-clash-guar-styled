@@ -114,7 +114,6 @@ const AdvancedSettings: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={autoLightweight}
           onCheckedChange={(value) => {
             patchAppConfig({ autoLightweight: value })
@@ -237,7 +236,6 @@ const AdvancedSettings: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={controlDns}
           onCheckedChange={async (value) => {
             try {
@@ -260,7 +258,6 @@ const AdvancedSettings: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={controlSniff}
           onCheckedChange={async (value) => {
             try {
@@ -288,7 +285,6 @@ const AdvancedSettings: React.FC = () => {
         divider
       >
         <Switch
-          size="sm"
           checked={networkDetection}
           onCheckedChange={(value) => {
             patchAppConfig({ networkDetection: value })

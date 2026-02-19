@@ -110,7 +110,6 @@ const Sniffer: React.FC = () => {
       <SettingCard>
         <SettingItem title={t('pages.sniffer.overrideConnectionAddress')} divider>
           <Switch
-            size="sm"
             checked={values.overrideDestination}
             onCheckedChange={(value) => {
               setValues({
@@ -130,7 +129,6 @@ const Sniffer: React.FC = () => {
         </SettingItem>
         <SettingItem title={t('pages.sniffer.sniffRealIPMapping')} divider>
           <Switch
-            size="sm"
             checked={values.forceDNSMapping}
             onCheckedChange={(value) => {
               setValues({ ...values, forceDNSMapping: value })
@@ -139,7 +137,6 @@ const Sniffer: React.FC = () => {
         </SettingItem>
         <SettingItem title={t('pages.sniffer.sniffUnmappedIP')} divider>
           <Switch
-            size="sm"
             checked={values.parsePureIP}
             onCheckedChange={(value) => {
               setValues({ ...values, parsePureIP: value })

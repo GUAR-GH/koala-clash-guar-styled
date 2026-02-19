@@ -278,21 +278,18 @@ const EditInfoModal: React.FC<Props> = (props) => {
                     </SettingItem>
                     <SettingItem title={t('profile.verifyFormat')}>
                       <Switch
-                        size="sm"
                         checked={values.verify ?? true}
                         onCheckedChange={(v) => setValues({ ...values, verify: v })}
                       />
                     </SettingItem>
                     <SettingItem title={t('profile.useProxyUpdate')}>
                       <Switch
-                        size="sm"
                         checked={values.useProxy ?? false}
                         onCheckedChange={(v) => setValues({ ...values, useProxy: v })}
                       />
                     </SettingItem>
                     <SettingItem title={t('profile.autoUpdate')}>
                       <Switch
-                        size="sm"
                         checked={values.autoUpdate ?? false}
                         onCheckedChange={(v) => setValues({ ...values, autoUpdate: v })}
                       />
@@ -361,21 +358,18 @@ const EditInfoModal: React.FC<Props> = (props) => {
                 </SettingItem>
                 <SettingItem title={t('profile.verifyFormat')}>
                   <Switch
-                    size="sm"
                     checked={values.verify ?? true}
                     onCheckedChange={(v) => setValues({ ...values, verify: v })}
                   />
                 </SettingItem>
                 <SettingItem title={t('profile.useProxyUpdate')}>
                   <Switch
-                    size="sm"
                     checked={values.useProxy ?? false}
                     onCheckedChange={(v) => setValues({ ...values, useProxy: v })}
                   />
                 </SettingItem>
                 <SettingItem title={t('profile.autoUpdate')}>
                   <Switch
-                    size="sm"
                     checked={values.autoUpdate ?? false}
                     onCheckedChange={(v) => setValues({ ...values, autoUpdate: v })}
                   />

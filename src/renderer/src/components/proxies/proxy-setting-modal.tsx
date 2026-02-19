@@ -136,7 +136,6 @@ const ProxySettingModal: React.FC<Props> = (props) => {
           </SettingItem>
           <SettingItem title={t('proxies.disconnectOnSwitch')} divider>
             <Switch
-              size="sm"
               checked={autoCloseConnection}
               onCheckedChange={(value) => {
                 patchAppConfig({ autoCloseConnection: value })

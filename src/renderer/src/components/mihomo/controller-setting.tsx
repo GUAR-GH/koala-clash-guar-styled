@@ -182,7 +182,6 @@ const ControllerSetting: React.FC = () => {
           </SettingItem>
           <SettingItem title={t('mihomo.controllerSettings.enableControllerPanel')} divider>
             <Switch
-              size="sm"
               checked={enableExternalUi}
               onCheckedChange={(v) => {
                 setEnableExternalUi(v)
@@ -296,7 +295,6 @@ const ControllerSetting: React.FC = () => {
           <div className="flex flex-col space-y-2 mt-2"></div>
           <SettingItem title={t('mihomo.controllerSettings.allowPrivateNetwork')}>
             <Switch
-              size="sm"
               checked={allowPrivateNetwork}
               onCheckedChange={(v) => {
                 onChangeNeedRestart({

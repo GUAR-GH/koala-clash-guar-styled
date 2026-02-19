@@ -61,15 +61,15 @@ const ConfigViewer: React.FC<Props> = ({ onClose }) => {
         <DialogFooter className="flex items-center justify-between sm:justify-between">
           <div className="flex items-center space-x-4">
             <label className="flex items-center space-x-2 text-sm">
-              <Switch size="sm" checked={isDiff} onCheckedChange={setIsDiff} />
+              <Switch checked={isDiff} onCheckedChange={setIsDiff} />
               <span>{t('sider.compareCurrentConfig')}</span>
             </label>
             <label className="flex items-center space-x-2 text-sm">
-              <Switch size="sm" checked={sideBySide} onCheckedChange={setSideBySide} />
+              <Switch checked={sideBySide} onCheckedChange={setSideBySide} />
               <span>{t('sider.sideBySide')}</span>
             </label>
             <label className="flex items-center space-x-2 text-sm">
-              <Switch size="sm" checked={isRaw} onCheckedChange={setIsRaw} />
+              <Switch checked={isRaw} onCheckedChange={setIsRaw} />
               <span>{t('sider.showRawText')}</span>
             </label>
           </div>
