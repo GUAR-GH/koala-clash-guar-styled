@@ -82,8 +82,8 @@ export const defaultControledMihomoConfig: Partial<MihomoConfig> = {
     'fake-ip-filter': ['*', '+.lan', '+.local', 'time.*.com', 'ntp.*.com', '+.market.xiaomi.com'],
     'use-hosts': false,
     'use-system-hosts': false,
-    'default-nameserver': ['tls://223.5.5.5'],
-    nameserver: ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'],
+    'default-nameserver': ['tls://1.1.1.1'],
+    nameserver: ['https://1.1.1.1/dns-query', 'https://8.8.8.8/dns-query'],
     'proxy-server-nameserver': [],
     'direct-nameserver': []
   },
