@@ -185,6 +185,7 @@ export default {
       openInBrowser: 'Open in browser',
       emptyTitle: 'No profiles yet',
       emptyDescription: 'Add a profile to get started',
+      addProfile: 'Add Profile',
       dropFileHint: 'Drop config file here',
       hwidLimitTitle: 'Device limit exceeded',
       hwidLimitDescription: 'The maximum device limit for this subscription has been reached. The subscription was not added or updated.',

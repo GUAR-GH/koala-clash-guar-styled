@@ -11,7 +11,8 @@ import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import Power from '@renderer/assets/on_icon.svg'
 import Pause from '@renderer/assets/pause_icon.svg'
-import { InfinityIcon } from 'lucide-react'
+import { InfinityIcon, WifiOff, PlusCircle } from 'lucide-react'
+import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return '0 B'
@@ -44,9 +45,25 @@ const Home: React.FC = () => {
   const { 'mixed-port': mixedPort } = controledMihomoConfig || {}
   const sysProxyDisabled = mixedPort == 0
 
-  const { profileConfig } = useProfileConfig()
+  const { profileConfig, addProfileItem } = useProfileConfig()
   const { groups } = useGroups()
   const navigate = useNavigate()
+  const hasProfiles = (profileConfig?.items?.length ?? 0) > 0
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingItem, setEditingItem] = useState<ProfileItem | null>(null)
+
+  const handleAddProfile = (): void => {
+    const newProfile: ProfileItem = {
+      id: '',
+      name: '',
+      type: 'remote',
+      url: '',
+      useProxy: false,
+      autoUpdate: true
+    }
+    setEditingItem(newProfile)
+    setShowEditModal(true)
+  }
 
   const [loading, setLoading] = useState(false)
   const [loadingDirection, setLoadingDirection] = useState<'connecting' | 'disconnecting'>(
@@ -137,90 +154,127 @@ const Home: React.FC = () => {
 
   return (
     <BasePage>
-      <div className="flex flex-col h-full px-2 pb-2 gap-4">
-        {/* Profile card */}
-        {currentProfile && (
-          <div className="rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-4">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              {(currentProfile.logo || currentProfile.home) && (
-                <img
-                  src={currentProfile.logo || `https://www.google.com/s2/favicons?domain=${new URL(currentProfile.home!).hostname}&sz=32`}
-                  alt=""
-                  className="w-10 h-10 rounded-full"
-                  onError={(e) => {
-                    ;(e.target as HTMLImageElement).style.display = 'none'
-                  }}
-                />
-              )}
-              <span className="font-medium text-base">{currentProfile.name}</span>
-            </div>
-            {currentProfile.announce && (
-              <div className="text-sm font-medium text-center">
-                {currentProfile.announce}
-              </div>
-            )}
-            {/* Subscription info */}
-          </div>
-        )}
-        {subscription && (
-          <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-1 bg-background/50">
-            <div className="flex flex-col items-center py-2 px-1">
-              <span className="text-sm text-foreground">{t('pages.home.trafficRemaining')}</span>
-              <span className="font-bold text-base mt-0.5">
-                {trafficTotal > 0 ? formatBytes(trafficRemaining) : t('pages.home.unlimited')}
-              </span>
-            </div>
-            <div className="h-8 w-px bg-stroke" />
-            <div className="flex flex-col items-center py-2 px-1">
-              <span className="text-sm text-foreground">{t('pages.home.daysRemaining')}</span>
-              <span className="text-base font-bold mt-0.5">
-                {expireTimestamp > 0 ? daysRemaining : <InfinityIcon />}
-              </span>
-            </div>
-            <div className="h-8 w-px bg-stroke" />
-            <div className="flex flex-col items-center py-2 px-1">
-              <span className="text-sm text-foreground">{t('pages.home.expires')}</span>
-              <span className="text-base font-bold mt-0.5">{expireDate}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Connection button */}
-        <div className="flex-1 flex flex-col grow-3 items-center justify-center gap-3 min-h-0">
-          <span className={`text-foreground font-semibold uppercase tracking-wider`}>{status}</span>
-          <button
-            disabled={isDisabled}
-            onClick={() => onValueChange(!isSelected)}
-            className="relative group transition-transform active:scale-95"
-          >
-            <div
-              className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 bg-radial-[at_30%_45%] backdrop-blur-xl border-2 ${
-                isSelected
-                  ? 'from-gradient-start-power-on/60 to-gradient-end-power-on/60 border-stroke-power-on'
-                  : 'from-gradient-start-power-off/50 to-gradient-end-power-off/50 border-stroke-power-off'
-              } ${loading ? 'animate-none' : ''}`}
+      {!hasProfiles ? (
+        <div className="h-full w-full flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 max-w-[300px] rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-8">
+            <WifiOff className="size-16 text-muted-foreground" />
+            <h2 className="text-xl font-bold text-foreground">{t('pages.profiles.emptyTitle')}</h2>
+            <p className="text-sm font-medium text-muted-foreground text-center">
+              {t('pages.profiles.emptyDescription')}
+            </p>
+            <button
+              onClick={handleAddProfile}
+              className="flex items-center gap-2 rounded-xl border border-stroke bg-gradient-start-power-on/50 backdrop-blur-xl px-6 py-3 text-foreground hover:bg-gradient-start-power-on/40 transition-colors"
             >
-              {isSelected ? (
-                <img src={Pause} alt="" className="w-20 h-20 fill-foreground" />
-              ) : (
-                <img src={Power} alt="" className="w-20 h-20 fill-foreground" />
-              )}
-            </div>
-          </button>
-          <span className="text-base font-bold text-foreground">{formatTimer(elapsed)}</span>
+              <PlusCircle className="size-5" />
+              <span className="text-sm font-medium">{t('pages.profiles.addProfile')}</span>
+            </button>
+          </div>
+          {showEditModal && editingItem && (
+            <EditInfoModal
+              item={editingItem}
+              isCurrent={false}
+              updateProfileItem={async (item: ProfileItem) => {
+                await addProfileItem(item)
+                setShowEditModal(false)
+                setEditingItem(null)
+              }}
+              onClose={() => {
+                setShowEditModal(false)
+                setEditingItem(null)
+              }}
+            />
+          )}
         </div>
-
-        {/* Group & Proxy selectors */}
-        {firstGroup && (
-          <div className="flex flex-col grow items-center gap-3 pb-2 mx-auto w-full max-w-48">
-            <div className="w-full cursor-pointer" onClick={() => navigate('/proxies')}>
-              <div className="flex items-center h-9 rounded-2xl border border-stroke px-3 py-1 backdrop-blur-xl bg-card/50 text-sm">
-                {firstGroup.now || '—'}
+      ) : (
+        <div className="flex flex-col h-full px-2 pb-2 gap-4">
+          {/* Profile card */}
+          {currentProfile && (
+            <div className="rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-4">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                {(currentProfile.logo || currentProfile.home) && (
+                  <img
+                    src={
+                      currentProfile.logo ||
+                      `https://www.google.com/s2/favicons?domain=${new URL(currentProfile.home!).hostname}&sz=32`
+                    }
+                    alt=""
+                    className="w-10 h-10 rounded-full"
+                    onError={(e) => {
+                      ;(e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                )}
+                <span className="font-medium text-base">{currentProfile.name}</span>
+              </div>
+              {currentProfile.announce && (
+                <div className="text-sm font-medium text-center">{currentProfile.announce}</div>
+              )}
+              {/* Subscription info */}
+            </div>
+          )}
+          {subscription && (
+            <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-1 bg-background/50">
+              <div className="flex flex-col items-center py-2 px-1">
+                <span className="text-sm text-foreground">{t('pages.home.trafficRemaining')}</span>
+                <span className="font-bold text-base mt-0.5">
+                  {trafficTotal > 0 ? formatBytes(trafficRemaining) : t('pages.home.unlimited')}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-stroke" />
+              <div className="flex flex-col items-center py-2 px-1">
+                <span className="text-sm text-foreground">{t('pages.home.daysRemaining')}</span>
+                <span className="text-base font-bold mt-0.5">
+                  {expireTimestamp > 0 ? daysRemaining : <InfinityIcon />}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-stroke" />
+              <div className="flex flex-col items-center py-2 px-1">
+                <span className="text-sm text-foreground">{t('pages.home.expires')}</span>
+                <span className="text-base font-bold mt-0.5">{expireDate}</span>
               </div>
             </div>
+          )}
+
+          {/* Connection button */}
+          <div className="flex-1 flex flex-col grow-3 items-center justify-center gap-3 min-h-0">
+            <span className={`text-foreground font-semibold uppercase tracking-wider`}>
+              {status}
+            </span>
+            <button
+              disabled={isDisabled}
+              onClick={() => onValueChange(!isSelected)}
+              className="relative group transition-transform active:scale-95"
+            >
+              <div
+                className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 bg-radial-[at_30%_45%] backdrop-blur-xl border-2 ${
+                  isSelected
+                    ? 'from-gradient-start-power-on/60 to-gradient-end-power-on/60 border-stroke-power-on'
+                    : 'from-gradient-start-power-off/50 to-gradient-end-power-off/50 border-stroke-power-off'
+                } ${loading ? 'animate-none' : ''}`}
+              >
+                {isSelected ? (
+                  <img src={Pause} alt="" className="w-20 h-20 fill-foreground" />
+                ) : (
+                  <img src={Power} alt="" className="w-20 h-20 fill-foreground" />
+                )}
+              </div>
+            </button>
+            <span className="text-base font-bold text-foreground">{formatTimer(elapsed)}</span>
           </div>
-        )}
-      </div>
+
+          {/* Group & Proxy selectors */}
+          {firstGroup && (
+            <div className="flex flex-col grow items-center gap-3 pb-2 mx-auto w-full max-w-48">
+              <div className="w-full cursor-pointer" onClick={() => navigate('/proxies')}>
+                <div className="flex items-center h-9 rounded-2xl border border-stroke px-3 py-1 backdrop-blur-xl bg-card/50 text-sm">
+                  {firstGroup.now || '—'}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </BasePage>
   )
 }

@@ -223,6 +223,7 @@ export default {
       openInBrowser: '在浏览器中打开',
       emptyTitle: '暂无订阅',
       emptyDescription: '添加订阅以开始使用',
+      addProfile: '添加订阅',
       dropFileHint: '将配置文件拖放到此处',
       hwidLimitTitle: '设备数量超限',
       hwidLimitDescription: '此订阅已达到最大设备数量限制。订阅未添加或更新。',

@@ -24,6 +24,7 @@ import {
   useSidebar
 } from '@renderer/components/ui/sidebar'
 import OutboundModeSwitcher from '@renderer/components/sider/outbound-mode-switcher'
+import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import UpdaterButton from '@renderer/components/updater/updater-button'
 import ConfigViewer from '@renderer/components/sider/config-viewer'
 
@@ -44,6 +45,8 @@ const navItems = [
   { key: 'settings', path: '/settings', icon: SettingsIcon, i18nKey: 'common.settings' }
 ]
 
+const allowedWithoutProfiles = new Set(['main', 'profile', 'settings'])
+
 const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
   const { t } = useTranslation()
   const location = useLocation()
@@ -51,6 +54,11 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
   const { toggleSidebar, state } = useSidebar()
   const collapsed = state === 'collapsed'
   const [showRuntimeConfig, setShowRuntimeConfig] = useState(false)
+  const { profileConfig } = useProfileConfig()
+  const hasProfiles = (profileConfig?.items?.length ?? 0) > 0
+  const filteredNavItems = hasProfiles
+    ? navItems
+    : navItems.filter((item) => allowedWithoutProfiles.has(item.key))
 
   return (
     <Sidebar collapsible="icon" side="left" variant="floating" className="pt-[57px]">
@@ -58,7 +66,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {filteredNavItems.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname.includes(item.path)
                 return (
@@ -83,7 +91,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex flex-col items-center gap-2">
-          <OutboundModeSwitcher iconOnly={collapsed} />
+          {hasProfiles && <OutboundModeSwitcher iconOnly={collapsed} />}
           {latest && latest.version && <UpdaterButton iconOnly={collapsed} latest={latest} />}
           <SidebarMenu>
             <SidebarMenuItem>
