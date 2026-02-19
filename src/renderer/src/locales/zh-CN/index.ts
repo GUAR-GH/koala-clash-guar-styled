@@ -454,8 +454,6 @@ export default {
       beta: '测试版',
       disableGPU: '禁用 GPU 加速',
       disableGPUHelp: '开启后，应用将禁用 GPU 加速，可能会提高稳定性，但会降低性能',
-      disableAnimation: '禁用动画',
-      disableAnimationHelp: '开启后，应用将减轻绝大部分动画效果，可能会提高性能'
     },
     appearance: {
       title: '外观设置',

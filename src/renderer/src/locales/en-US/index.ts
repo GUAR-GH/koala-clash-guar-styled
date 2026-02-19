@@ -424,9 +424,6 @@ export default {
       disableGPU: 'Disable GPU Acceleration',
       disableGPUHelp:
         'When enabled, the application will disable GPU acceleration, which may improve stability but reduce performance',
-      disableAnimation: 'Disable Animations',
-      disableAnimationHelp:
-        'When enabled, the application will reduce most animation effects, which may improve performance'
     },
     appearance: {
       title: 'Appearance Settings',

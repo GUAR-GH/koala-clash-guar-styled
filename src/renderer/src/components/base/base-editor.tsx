@@ -7,7 +7,6 @@ import pac from 'types-pac/pac.d.ts?raw'
 import { useTheme } from 'next-themes'
 import { nanoid } from 'nanoid'
 import React from 'react'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { t } from 'i18next'
 type Language = 'yaml' | 'javascript' | 'css' | 'json' | 'text'
 
@@ -103,7 +102,6 @@ export const BaseEditor: React.FC<Props> = (props) => {
     language,
     onChange
   } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>(undefined)
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor>(undefined)
@@ -151,29 +149,29 @@ export const BaseEditor: React.FC<Props> = (props) => {
     },
     fontFamily: `Maple Mono NF CN,Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji", "Noto Color Emoji"`,
     fontLigatures: true, // Enable ligatures.
-    smoothScrolling: !disableAnimation, // Disable smooth scrolling when animations are off.
+    smoothScrolling: true, // Disable smooth scrolling when animations are off.
     pixelRatio: window.devicePixelRatio, // Use device pixel ratio.
     renderSideBySide: diffRenderSideBySide, // Side-by-side diff.
     glyphMargin: false, // Disable glyph margin.
     folding: true, // Enable code folding.
     scrollBeyondLastLine: false, // Prevent scrolling past last line.
     automaticLayout: true, // Auto layout.
-    wordWrap: 'on' as 'on' | 'off', // Word wrap.
+    wordWrap: 'on' as const, // Word wrap.
     // Performance options when animations are disabled.
-    cursorBlinking: (disableAnimation ? 'solid' : 'blink') as 'solid' | 'blink', // Disable cursor blinking.
-    cursorSmoothCaretAnimation: (disableAnimation ? 'off' : 'on') as 'off' | 'on', // Disable caret animation.
+    cursorBlinking: 'blink' as const, // Disable cursor blinking.
+    cursorSmoothCaretAnimation: 'off' as const, // Disable caret animation.
     scrollbar: {
-      useShadows: !disableAnimation, // Disable scrollbar shadows.
-      verticalScrollbarSize: disableAnimation ? 10 : 14, // Reduce scrollbar size.
-      horizontalScrollbarSize: disableAnimation ? 10 : 14
+      useShadows: true, // Disable scrollbar shadows.
+      verticalScrollbarSize: 14, // Reduce scrollbar size.
+      horizontalScrollbarSize: 14
     },
     suggest: {
-      insertMode: (disableAnimation ? 'replace' : 'insert') as 'replace' | 'insert', // Simplify suggestion insert mode.
-      showIcons: !disableAnimation // Disable suggestion icons to reduce rendering.
+      insertMode: 'insert' as const, // Simplify suggestion insert mode.
+      showIcons: true // Disable suggestion icons to reduce rendering.
     },
     hover: {
-      enabled: !disableAnimation, // Disable hover tooltips.
-      delay: disableAnimation ? 0 : 300
+      enabled: true, // Disable hover tooltips.
+      delay: 300
     }
   }
 

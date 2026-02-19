@@ -22,8 +22,7 @@ const GeneralConfig: React.FC = () => {
     autoCheckUpdate,
     updateChannel = 'stable',
 
-    disableGPU = false,
-    disableAnimation = false
+    disableGPU = false
   } = appConfig || {}
 
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
@@ -49,9 +48,6 @@ const GeneralConfig: React.FC = () => {
           }}
           onConfirm={async () => {
             await patchAppConfig({ disableGPU: pendingDisableGPU })
-            if (!pendingDisableGPU) {
-              await patchAppConfig({ disableAnimation: false })
-            }
             await relaunchApp()
           }}
         />
@@ -104,7 +100,6 @@ const GeneralConfig: React.FC = () => {
             </TabsList>
           </Tabs>
         </SettingItem>
-
         <SettingItem
           title={t('settings.general.disableGPU')}
           actions={
@@ -117,33 +112,12 @@ const GeneralConfig: React.FC = () => {
               <TooltipContent>{t('settings.general.disableGPUHelp')}</TooltipContent>
             </Tooltip>
           }
-          divider
         >
           <Switch
             checked={pendingDisableGPU}
             onCheckedChange={(value) => {
               setPendingDisableGPU(value)
               setShowRestartConfirm(true)
-            }}
-          />
-        </SettingItem>
-        <SettingItem
-          title={t('settings.general.disableAnimation')}
-          actions={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon-sm" variant="ghost">
-                  <MessageCircleQuestionMark className="text-lg" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('settings.general.disableAnimationHelp')}</TooltipContent>
-            </Tooltip>
-          }
-        >
-          <Switch
-            checked={disableAnimation}
-            onCheckedChange={(value) => {
-              patchAppConfig({ disableAnimation: value })
             }}
           />
         </SettingItem>
