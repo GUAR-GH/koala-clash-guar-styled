@@ -593,7 +593,7 @@ async function setPublicDNS(): Promise<void> {
     const { originDNS, autoSetDNSMode = 'none' } = await getAppConfig()
     if (!originDNS) {
       await getOriginDNS()
-      await setDNS('223.5.5.5', autoSetDNSMode)
+      await setDNS('1.1.1.1', autoSetDNSMode)
     }
   } else {
     if (setPublicDNSTimer) clearTimeout(setPublicDNSTimer)
