@@ -49,7 +49,6 @@ interface Props {
   addProfileItem: (item: Partial<ProfileItem>) => Promise<void>
   updateProfileItem: (item: ProfileItem) => Promise<void>
   removeProfileItem: (id: string) => Promise<void>
-  mutateProfileConfig: () => void
   onClick: () => Promise<void>
   switching: boolean
 }
@@ -239,7 +238,6 @@ const ProfileItem: React.FC<Props> = (props) => {
     info,
     addProfileItem,
     removeProfileItem,
-    mutateProfileConfig,
     updateProfileItem,
     onClick,
     isCurrent,
@@ -424,8 +422,9 @@ const ProfileItem: React.FC<Props> = (props) => {
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                removeProfileItem(info.id)
-                mutateProfileConfig()
+                setTimeout(() => {
+                  removeProfileItem(info.id)
+                }, 200)
               }}
             >
               {t('common.delete')}
@@ -461,7 +460,7 @@ const ProfileItem: React.FC<Props> = (props) => {
             {/* Favicon or check indicator */}
             <div
               className={cn(
-                'flex items-center justify-center shrink-0 w-[34px] h-[34px] rounded-lg transition-colors duration-200',
+                'flex items-center justify-center shrink-0 size-8 rounded-lg transition-colors duration-200',
                 isCurrent
                   ? 'bg-linear-to-br from-gradient-start-power-on/30 to-gradient-end-power-on/30'
                   : 'bg-muted/50'
@@ -471,7 +470,7 @@ const ProfileItem: React.FC<Props> = (props) => {
                 <img
                   src={info.logo || `https://www.google.com/s2/favicons?domain=${new URL(info.home!).hostname}&sz=32`}
                   alt=""
-                  className="w-4.5 h-4.5 rounded-sm"
+                  className="size-6 rounded-sm"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
                     target.style.display = 'none'

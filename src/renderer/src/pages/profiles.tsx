@@ -41,7 +41,6 @@ const Profiles: React.FC = () => {
     updateProfileItem,
     removeProfileItem,
     changeCurrentProfile,
-    mutateProfileConfig,
     hwidLimitError,
     clearHwidLimitError
   } = useProfileConfig()
@@ -223,8 +222,6 @@ const Profiles: React.FC = () => {
           isCurrent={editingItem.id === current}
           updateProfileItem={async (item: ProfileItem) => {
             await addProfileItem(item)
-            setShowEditModal(false)
-            setEditingItem(null)
           }}
           onClose={() => {
             setShowEditModal(false)
@@ -273,7 +270,6 @@ const Profiles: React.FC = () => {
                   isCurrent={item.id === current}
                   addProfileItem={addProfileItem}
                   removeProfileItem={removeProfileItem}
-                  mutateProfileConfig={mutateProfileConfig}
                   updateProfileItem={updateProfileItem}
                   info={item}
                   switching={switching}

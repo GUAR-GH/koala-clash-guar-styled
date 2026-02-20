@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { Switch } from '@renderer/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { cn } from '@renderer/lib/utils'
 import SettingItem from '../base/base-setting-item'
+import { Spinner } from '@renderer/components/ui/spinner'
 import { getFilePath, readTextFile, restartCore } from '@renderer/utils/ipc'
 import { useTranslation } from 'react-i18next'
 import {
@@ -48,6 +49,8 @@ const EditInfoModal: React.FC<Props> = (props) => {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [urlTouched, setUrlTouched] = useState(false)
   const [localFileName, setLocalFileName] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const closeRef = useRef<HTMLButtonElement>(null)
   const inputWidth = 'w-[300px] md:w-[300px] lg:w-[500px] xl:w-[700px]'
 
   const isNew = !item.id
@@ -61,15 +64,18 @@ const EditInfoModal: React.FC<Props> = (props) => {
     : true
 
   const onSave = async (): Promise<void> => {
+    setSaving(true)
     try {
       const itemToSave = { ...values }
       await updateProfileItem(itemToSave)
       if (item.id && isCurrent) {
         await restartCore()
       }
-      onClose()
+      closeRef.current?.click()
     } catch (e) {
       toast.error(`${e}`)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -142,6 +148,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
         )}
         showCloseButton={false}
       >
+        <DialogClose ref={closeRef} className="hidden" />
         <DialogHeader className="app-drag">
           <DialogTitle>
             {isNew ? t('profile.importRemoteConfig') : t('profile.editInfo')}
@@ -414,8 +421,13 @@ const EditInfoModal: React.FC<Props> = (props) => {
               {t('common.cancel')}
             </Button>
           </DialogClose>
-          <Button size="sm" onClick={onSave} disabled={!canImport}>
-            {isNew ? t('common.import') : t('common.save')}
+          <Button size="sm" onClick={onSave} disabled={!canImport || saving}>
+            <span className="relative inline-flex items-center justify-center">
+              {saving && <Spinner className="size-4 absolute" />}
+              <span className={saving ? 'invisible' : undefined}>
+                {isNew ? t('common.import') : t('common.save')}
+              </span>
+            </span>
           </Button>
         </DialogFooter>
       </DialogContent>
