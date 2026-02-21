@@ -5,14 +5,18 @@ import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-c
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import { useGroups } from '@renderer/hooks/use-groups'
 import { restartCore, triggerSysProxy } from '@renderer/utils/ipc'
+import NumberFlow from '@number-flow/react'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import Power from '@renderer/assets/on_icon.svg'
 import Pause from '@renderer/assets/pause_icon.svg'
-import { InfinityIcon, WifiOff, PlusCircle } from 'lucide-react'
+import { InfinityIcon, WifiOff, PlusCircle, ChevronRight, Globe } from 'lucide-react'
+import { SiTelegram } from 'react-icons/si'
 import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
+import { Spinner } from '@renderer/components/ui/spinner'
+import { CharacterMorph } from '@renderer/components/ui/character-morph'
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return '0 B'
@@ -23,13 +27,6 @@ function formatBytes(bytes: number): string {
 
 // Module-level variable: persists across component mounts/unmounts
 let connectionStartTime: number | null = null
-
-function formatTimer(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
 
 const Home: React.FC = () => {
   const { t } = useTranslation()
@@ -107,6 +104,16 @@ const Home: React.FC = () => {
     : isSelected
       ? t('pages.home.connected')
       : t('pages.home.disconnected')
+  const statusWidthTexts = [
+    t('pages.home.connecting'),
+    t('pages.home.disconnecting'),
+    t('pages.home.connected'),
+    t('pages.home.disconnected')
+  ]
+  const showConnectedTimer = !loading && isSelected
+  const elapsedHours = Math.floor(elapsed / 3600)
+  const elapsedMinutes = Math.floor((elapsed % 3600) / 60)
+  const elapsedSeconds = elapsed % 60
 
   // Current profile & subscription
   const currentProfile = useMemo(() => {
@@ -124,6 +131,21 @@ const Home: React.FC = () => {
     expireTimestamp > 0 ? Math.max(0, dayjs.unix(expireTimestamp).diff(dayjs(), 'day')) : 0
 
   const firstGroup = groups?.[0]
+  const supportUrl = currentProfile?.supportUrl
+  const supportLinkInfo = useMemo(() => {
+    if (!supportUrl) return null
+    try {
+      const parsed = new URL(supportUrl)
+      const normalized = `${parsed.hostname}${parsed.pathname}`.toLowerCase()
+      return {
+        href: parsed.toString(),
+        isTelegram:
+          parsed.protocol === 'tg:' || normalized.includes('t.me') || normalized.includes('telegram')
+      }
+    } catch {
+      return null
+    }
+  }, [supportUrl])
 
   const onValueChange = async (enable: boolean): Promise<void> => {
     setLoading(true)
@@ -237,10 +259,15 @@ const Home: React.FC = () => {
           )}
 
           {/* Connection button */}
-          <div className="flex-1 flex flex-col grow-3 items-center justify-center gap-3 min-h-0">
-            <span className={`text-foreground font-semibold uppercase tracking-wider`}>
-              {status}
-            </span>
+          <div className="flex-1 flex flex-col grow-3 items-center justify-center min-h-0">
+            <div className="mb-3 flex h-6 items-center justify-center">
+              <CharacterMorph
+                texts={[status]}
+                reserveTexts={statusWidthTexts}
+                interval={3000}
+                className="h-6 leading-none text-foreground font-semibold uppercase"
+              />
+            </div>
             <button
               disabled={isDisabled}
               onClick={() => onValueChange(!isSelected)}
@@ -253,24 +280,80 @@ const Home: React.FC = () => {
                     : 'from-gradient-start-power-off/50 to-gradient-end-power-off/50 border-stroke-power-off'
                 } ${loading ? 'animate-none' : ''}`}
               >
-                {isSelected ? (
-                  <img src={Pause} alt="" className="w-20 h-20 fill-foreground" />
-                ) : (
-                  <img src={Power} alt="" className="w-20 h-20 fill-foreground" />
-                )}
+                <div className="relative size-20">
+                  <Spinner
+                    className={`absolute inset-0 m-auto size-20 text-foreground transition-all duration-300 ease-out ${
+                      loading ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                    }`}
+                  />
+                  <img
+                    src={Pause}
+                    alt=""
+                    className={`absolute inset-0 w-20 h-20 fill-foreground transition-all duration-300 ease-out ${
+                      !loading && isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                    }`}
+                  />
+                  <img
+                    src={Power}
+                    alt=""
+                    className={`absolute inset-0 w-20 h-20 fill-foreground transition-all duration-300 ease-out ${
+                      !loading && !isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                    }`}
+                  />
+                </div>
               </div>
             </button>
-            <span className="text-base font-bold text-foreground">{formatTimer(elapsed)}</span>
+            <div className="mt-3 h-8 flex items-center justify-center">
+              <div
+                aria-hidden={!showConnectedTimer}
+                className={`inline-flex items-center gap-0.5 text-base font-bold text-foreground tabular-nums transition-all duration-300 ease-out ${
+                  showConnectedTimer ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
+                }`}
+              >
+                <NumberFlow
+                  value={elapsedHours}
+                  format={{ minimumIntegerDigits: 2, useGrouping: false }}
+                />
+                <span>:</span>
+                <NumberFlow
+                  value={elapsedMinutes}
+                  format={{ minimumIntegerDigits: 2, useGrouping: false }}
+                />
+                <span>:</span>
+                <NumberFlow
+                  value={elapsedSeconds}
+                  format={{ minimumIntegerDigits: 2, useGrouping: false }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Group & Proxy selectors */}
           {firstGroup && (
-            <div className="flex flex-col grow items-center gap-3 pb-2 mx-auto w-full max-w-48">
+            <div className="flex flex-col grow items-center gap-3 pb-2 mx-auto w-full max-w-3xs max-h-16">
               <div className="w-full cursor-pointer" onClick={() => navigate('/proxies')}>
-                <div className="flex items-center h-9 rounded-2xl border border-stroke px-3 py-1 backdrop-blur-xl bg-card/50 text-sm">
-                  {firstGroup.now || '—'}
+                <div className="flex items-center justify-between h-9 rounded-2xl border border-stroke pl-3 pr-1 py-3 backdrop-blur-xl bg-card/50">
+                  <div className="text-sm truncate max-w-52">{firstGroup.now || '—'}</div>
+
+                  <ChevronRight />
                 </div>
               </div>
+            </div>
+          )}
+          {supportLinkInfo && (
+            <div className="flex justify-center text-sm text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => open(supportLinkInfo.href)}
+                className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+              >
+                {supportLinkInfo.isTelegram ? (
+                  <SiTelegram className="size-4" />
+                ) : (
+                  <Globe className="size-4" />
+                )}
+                <span>{t('pages.profiles.support')}</span>
+              </button>
             </div>
           )}
         </div>
