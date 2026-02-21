@@ -66,14 +66,14 @@ export async function generateProfile(): Promise<void> {
   const controledMihomoConfig = await getControledMihomoConfig()
 
   const configToMerge = JSON.parse(JSON.stringify(controledMihomoConfig))
-  if (!controlDns) {
+  if (!controlDns && currentProfile.dns) {
     delete configToMerge.dns
     delete configToMerge.hosts
   }
-  if (!controlSniff) {
+  if (!controlSniff && currentProfile.sniffer) {
     delete configToMerge.sniffer
   }
-  if (!controlTun) {
+  if (!controlTun && currentProfile.tun) {
     delete configToMerge.tun
   }
 
