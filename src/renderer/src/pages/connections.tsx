@@ -564,87 +564,81 @@ const Connections: React.FC = () => {
     <BasePage
       title={t('pages.connections.title')}
       header={
-        <>
-          <div className="flex">
-            <div className="flex items-center">
-              <span className="mx-1 text-gray-400">
-                ↑ {calcTraffic(connectionsInfo?.uploadTotal ?? 0)}{' '}
-              </span>
-              <span className="mx-1 text-gray-400">
-                ↓ {calcTraffic(connectionsInfo?.downloadTotal ?? 0)}{' '}
-              </span>
-            </div>
+        <div className="flex h-8 items-center gap-1 self-start">
+          <div className="flex h-8 items-center gap-1 whitespace-nowrap">
+            <span className="px-1 text-gray-400">↑ {calcTraffic(connectionsInfo?.uploadTotal ?? 0)}</span>
+            <span className="px-1 text-gray-400">↓ {calcTraffic(connectionsInfo?.downloadTotal ?? 0)}</span>
+          </div>
+          <Button
+            className="app-nodrag shrink-0"
+            title={
+              viewMode === 'list'
+                ? t('pages.connections.switchToTable')
+                : t('pages.connections.switchToList')
+            }
+            size="icon-sm"
+            variant="ghost"
+            onClick={async () => {
+              const newMode = viewMode === 'list' ? 'table' : 'list'
+              setViewMode(newMode)
+              await patchAppConfig({ connectionViewMode: newMode })
+            }}
+          >
+            {viewMode === 'list' ? (
+              <Table2 className="text-lg" />
+            ) : (
+              <TableOfContents className="text-lg" />
+            )}
+          </Button>
+          <Button
+            className="app-nodrag shrink-0"
+            title={isPaused ? t('connections.resume') : t('connections.pause')}
+            size="icon-sm"
+            variant="ghost"
+            onClick={togglePause}
+          >
+            {isPaused ? <Play className="text-lg" /> : <Pause className="text-lg" />}
+          </Button>
+          <div className="relative flex items-center">
             <Button
-              className="app-nodrag ml-1"
+              className="app-nodrag shrink-0"
               title={
-                viewMode === 'list'
-                  ? t('pages.connections.switchToTable')
-                  : t('pages.connections.switchToList')
+                tab === 'active'
+                  ? t('pages.connections.closeAll')
+                  : t('pages.connections.clearClosed')
               }
               size="icon-sm"
               variant="ghost"
-              onClick={async () => {
-                const newMode = viewMode === 'list' ? 'table' : 'list'
-                setViewMode(newMode)
-                await patchAppConfig({ connectionViewMode: newMode })
+              onClick={() => {
+                if (filter === '') {
+                  closeAllConnections()
+                } else {
+                  filteredConnections.forEach((conn) => {
+                    closeConnection(conn.id)
+                  })
+                }
               }}
             >
-              {viewMode === 'list' ? (
-                <Table2 className="text-lg" />
+              {tab === 'active' ? (
+                <X className="size-4" />
               ) : (
-                <TableOfContents className="text-lg" />
+                <Trash2 className="relative -top-px size-4" />
               )}
             </Button>
-            <Button
-              className="app-nodrag ml-1"
-              title={isPaused ? t('connections.resume') : t('connections.pause')}
-              size="icon-sm"
-              variant="ghost"
-              onClick={togglePause}
-            >
-              {isPaused ? <Play className="text-lg" /> : <Pause className="text-lg" />}
-            </Button>
-            <div className="relative flex items-center">
-              <Button
-                className="app-nodrag ml-1"
-                title={
-                  tab === 'active'
-                    ? t('pages.connections.closeAll')
-                    : t('pages.connections.clearClosed')
-                }
-                size="icon-sm"
-                variant="ghost"
-                onClick={() => {
-                  if (filter === '') {
-                    closeAllConnections()
-                  } else {
-                    filteredConnections.forEach((conn) => {
-                      closeConnection(conn.id)
-                    })
-                  }
-                }}
-              >
-                {tab === 'active' ? (
-                  <X className="text-lg" />
-                ) : (
-                  <Trash2 className="text-lg" />
-                )}
-              </Button>
-              <Badge className="absolute -top-0.5 -right-0.5 min-w-3 h-3 justify-center px-0.5 text-[8px] leading-none">
-                {filteredConnections.length}
-              </Badge>
-            </div>
+            <Badge className="absolute -top-0.5 -right-0.5 min-w-3 h-3 justify-center px-0.5 text-[8px] leading-none">
+              {filteredConnections.length}
+            </Badge>
           </div>
           <Button
             size="icon-sm"
-            className="app-nodrag"
+            className="app-nodrag shrink-0"
             variant="ghost"
             title={t('pages.connections.connectionSettings')}
             onClick={() => setIsSettingModalOpen(true)}
           >
             <SlidersHorizontal className="text-lg" />
           </Button>
-        </>
+        </div>
       }
     >
       {isDetailModalOpen && selected && (

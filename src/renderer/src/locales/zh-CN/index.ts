@@ -39,6 +39,7 @@ export default {
     disabled: '禁用',
     settings: '设置',
     hideSidebar: '隐藏',
+    toggleSidebar: '展开',
     updateAvailable: '更新'
   },
 
@@ -201,7 +202,8 @@ export default {
       group: '分组:',
       proxy: '代理:',
       noProfile: '没有活动配置',
-      unlimited: '无限'
+      unlimited: '无限',
+      never: '永不'
     },
     settings: {
       title: '应用设置',

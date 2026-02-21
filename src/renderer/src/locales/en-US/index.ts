@@ -39,6 +39,7 @@ export default {
     disabled: 'Disabled',
     settings: 'Settings',
     hideSidebar: 'Hide',
+    toggleSidebar: 'Expand',
     updateAvailable: 'Update'
   },
 
@@ -163,7 +164,8 @@ export default {
       group: 'Group:',
       proxy: 'Proxy:',
       noProfile: 'No active profile',
-      unlimited: 'Unlimited'
+      unlimited: 'Unlimited',
+      never: 'Never'
     },
     settings: {
       title: 'Application Settings',

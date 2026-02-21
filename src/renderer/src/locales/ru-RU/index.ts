@@ -39,6 +39,7 @@ export default {
     disabled: 'Отключено',
     settings: 'Настройки',
     hideSidebar: 'Скрыть',
+    toggleSidebar: 'Раскрыть',
     updateAvailable: 'Обновление'
   },
 
@@ -161,7 +162,8 @@ export default {
       group: 'Группа:',
       proxy: 'Прокси:',
       noProfile: 'Нет активного профиля',
-      unlimited: 'Безлимит'
+      unlimited: 'Безлимит',
+      never: 'Никогда'
     },
     settings: {
       title: 'Настройки приложения',

@@ -31,17 +31,21 @@ import {
 } from '@renderer/components/ui/alert-dialog'
 import {
   Check,
+  Clock3,
   CircleAlert,
   EllipsisVertical,
   ExternalLink,
   FileText,
   FolderOpen,
   HeadsetIcon,
+  InfinityIcon,
   ListTree,
   Pencil,
   RefreshCcw,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react'
+import { Cell, Pie, PieChart } from 'recharts'
 
 interface Props {
   info: ProfileItem
@@ -68,167 +72,123 @@ const TrafficRing: React.FC<{
   hasLimit: boolean
   expired: boolean
 }> = ({ percent, size = 40, strokeWidth = 3.5, hasLimit, expired }) => {
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const cx = size / 2
-  const cy = size / 2
-  const exhausted = hasLimit && percent >= 100
+  const normalizedPercent = Math.max(0, Math.min(100, Number.isFinite(percent) ? percent : 0))
+  const outerRadius = size / 2 - 1
+  const innerRadius = Math.max(outerRadius - strokeWidth, 1)
+  const exhausted = hasLimit && normalizedPercent >= 100
 
   const getColor = (): string => {
-    if (percent > 90) return 'var(--destructive)'
-    if (percent > 70) return 'var(--warning)'
+    if (normalizedPercent > 90) return 'var(--destructive)'
+    if (normalizedPercent > 70) return 'var(--warning)'
     return 'var(--gradient-end-power-on)'
   }
 
-  // Expired subscription: orange/warning dashed ring with clock icon
+  const segmentedData = Array.from({ length: 10 }, (_, index) => ({
+    key: `segment-${index}`,
+    value: 1
+  }))
+
+  const ringProps = {
+    dataKey: 'value',
+    cx: '50%',
+    cy: '50%',
+    innerRadius,
+    outerRadius,
+    startAngle: 90,
+    endAngle: -270,
+    stroke: 'none' as const
+  }
+
+  const renderSegmentedRing = (color: string): React.ReactNode => (
+    <Pie
+      {...ringProps}
+      data={segmentedData}
+      paddingAngle={6}
+      cornerRadius={strokeWidth > 2 ? strokeWidth / 4 : 0}
+      isAnimationActive={false}
+    >
+      {segmentedData.map((segment, index) => (
+        <Cell
+          key={segment.key}
+          fill={color}
+          fillOpacity={index % 2 === 0 ? 0.9 : 0.35}
+        />
+      ))}
+    </Pie>
+  )
+
   if (expired) {
-    const dashLen = circumference / 10
     return (
-      <svg width={size} height={size} className="shrink-0">
-        <circle
-          cx={cx}
-          cy={cy}
-          r={radius}
-          fill="none"
-          stroke="var(--warning)"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${dashLen * 0.5} ${dashLen * 0.5}`}
-          opacity={0.35}
-        />
-        <circle
-          cx={cx}
-          cy={cy}
-          r={radius * 0.55}
-          fill="none"
-          stroke="var(--warning)"
-          strokeWidth={1.5}
-          opacity={0.6}
-        />
-        {/* Clock hands */}
-        <line
-          x1={cx}
-          y1={cy}
-          x2={cx}
-          y2={cy - radius * 0.35}
-          stroke="var(--warning)"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-        />
-        <line
-          x1={cx}
-          y1={cy}
-          x2={cx + radius * 0.25}
-          y2={cy}
-          stroke="var(--warning)"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-        />
-        {/* Center dot */}
-        <circle cx={cx} cy={cy} r={1} fill="var(--warning)" />
-      </svg>
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
+        <PieChart width={size} height={size}>
+          {renderSegmentedRing('var(--warning)')}
+        </PieChart>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <Clock3 className="size-3.5 text-warning" />
+        </div>
+      </div>
     )
   }
 
-  // Unlimited: dashed ring with infinity icon
   if (!hasLimit) {
-    const dashLen = circumference / 8
     return (
-      <svg width={size} height={size} className="shrink-0">
-        <circle
-          cx={cx}
-          cy={cy}
-          r={radius}
-          fill="none"
-          stroke="var(--gradient-end-power-on)"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${dashLen * 0.6} ${dashLen * 0.4}`}
-          strokeLinecap="round"
-          opacity={0.4}
-        />
-        <text
-          x={cx}
-          y={cy}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={14}
-          fill="var(--gradient-end-power-on)"
-          className="font-medium"
-        >
-          ∞
-        </text>
-      </svg>
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
+        <PieChart width={size} height={size}>
+          {renderSegmentedRing('var(--gradient-end-power-on)')}
+        </PieChart>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <InfinityIcon className="size-3.5 text-gradient-end-power-on" />
+        </div>
+      </div>
     )
   }
 
-  // Exhausted: full red ring with X icon
   if (exhausted) {
     return (
-      <svg width={size} height={size} className="shrink-0">
-        <circle
-          cx={cx}
-          cy={cy}
-          r={radius}
-          fill="none"
-          stroke="var(--destructive)"
-          strokeWidth={strokeWidth}
-          opacity={0.25}
-        />
-        <circle
-          cx={cx}
-          cy={cy}
-          r={radius}
-          fill="none"
-          stroke="var(--destructive)"
-          strokeWidth={strokeWidth}
-        />
-        <line
-          x1={cx - 5}
-          y1={cy - 5}
-          x2={cx + 5}
-          y2={cy + 5}
-          stroke="var(--destructive)"
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-        <line
-          x1={cx + 5}
-          y1={cy - 5}
-          x2={cx - 5}
-          y2={cy + 5}
-          stroke="var(--destructive)"
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-      </svg>
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
+        <PieChart width={size} height={size}>
+          <Pie
+            {...ringProps}
+            data={[{ value: 100 }]}
+            fill="var(--destructive)"
+            fillOpacity={0.2}
+            isAnimationActive={false}
+          />
+          <Pie {...ringProps} data={[{ value: 100 }]} fill="var(--destructive)" />
+        </PieChart>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <X className="size-3.5 text-destructive" />
+        </div>
+      </div>
     )
   }
 
-  // Normal: arc progress ring
-  const offset = circumference - (percent / 100) * circumference
   return (
-    <svg width={size} height={size} className="shrink-0 -rotate-90">
-      <circle
-        cx={cx}
-        cy={cy}
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        className="text-muted/40"
-      />
-      <circle
-        cx={cx}
-        cy={cy}
-        r={radius}
-        fill="none"
-        stroke={getColor()}
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        className="transition-all duration-500"
-      />
-    </svg>
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <PieChart width={size} height={size}>
+        <Pie
+          {...ringProps}
+          data={[{ value: 100 }]}
+          fill="var(--muted)"
+          fillOpacity={0.3}
+          isAnimationActive={false}
+        />
+        <Pie
+          dataKey="value"
+          data={[{ value: normalizedPercent }]}
+          cx="50%"
+          cy="50%"
+          innerRadius={innerRadius}
+          outerRadius={outerRadius}
+          startAngle={90}
+          endAngle={90 - (normalizedPercent / 100) * 360}
+          fill={getColor()}
+          stroke="none"
+          cornerRadius={strokeWidth > 2 ? strokeWidth / 2 : 0}
+          animationDuration={500}
+        />
+      </PieChart>
+    </div>
   )
 }
 

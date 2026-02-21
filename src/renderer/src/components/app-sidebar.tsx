@@ -91,7 +91,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex flex-col items-center gap-2">
-          {hasProfiles && <OutboundModeSwitcher iconOnly={collapsed} />}
+          {hasProfiles && <OutboundModeSwitcher />}
           {latest && latest.version && <UpdaterButton iconOnly={collapsed} latest={latest} />}
           <SidebarMenu>
             <SidebarMenuItem>

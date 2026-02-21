@@ -126,7 +126,7 @@ const Home: React.FC = () => {
   const trafficTotal = subscription?.total ?? 0
   const trafficRemaining = trafficTotal > 0 ? trafficTotal - trafficUsed : 0
   const expireTimestamp = subscription?.expire ?? 0
-  const expireDate = expireTimestamp > 0 ? dayjs.unix(expireTimestamp).format('L') : t('pages.home.unlimited')
+  const expireDate = expireTimestamp > 0 ? dayjs.unix(expireTimestamp).format('L') : t('pages.home.never')
   const daysRemaining =
     expireTimestamp > 0 ? Math.max(0, dayjs.unix(expireTimestamp).diff(dayjs(), 'day')) : 0
 
@@ -240,7 +240,7 @@ const Home: React.FC = () => {
               <div className="flex flex-col items-center py-2 px-1">
                 <span className="text-sm text-foreground">{t('pages.home.trafficRemaining')}</span>
                 <span className="font-bold text-base mt-0.5">
-                  {trafficTotal > 0 ? formatBytes(trafficRemaining) : t('pages.home.unlimited')}
+                  {trafficTotal > 0 ? formatBytes(trafficRemaining) : <InfinityIcon />}
                 </span>
               </div>
               <div className="h-8 w-px bg-stroke" />
