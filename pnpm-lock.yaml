@@ -237,7 +237,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       vite:
-        specifier: npm:rolldown-vite@^7.3.1
+        specifier: npm:rolldown-vite@latest
         version: rolldown-vite@7.3.1(@types/node@24.10.13)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
       vite-plugin-monaco-editor:
         specifier: 1.1.0
