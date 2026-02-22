@@ -160,58 +160,124 @@
 }
 
 .driver-popover {
-  background-color: var(--popover) !important;
-  border-radius: 8px !important;
-  color: var(--popover-foreground) !important;
+  background-color: var(--card) !important;
+  border: 1px solid var(--stroke) !important;
+  border-radius: 1rem !important;
+  color: var(--foreground) !important;
+  box-shadow:
+    0 14px 38px rgb(0 0 0 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 12%) !important;
+  min-width: 270px !important;
+  max-width: 340px !important;
+}
+
+.driver-popover-title {
+  color: var(--foreground) !important;
+  line-height: 1.35 !important;
+  font-size: 1rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.01em;
+  padding-right: 26px;
+}
+
+.driver-popover-title[style*='block'] + .driver-popover-description {
+  margin-top: 8px !important;
+}
+
+.driver-popover-description {
+  color: var(--muted-foreground) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
 }
 
 .driver-popover a {
-  color: var(--primary) !important;
+  color: var(--foreground) !important;
   text-decoration: underline !important;
+  text-decoration-color: var(--stroke-power-on) !important;
+  text-underline-offset: 2px;
 }
 
 .driver-popover-close-btn {
-  color: var(--popover-foreground) !important;
+  display: none !important;
 }
 
 .driver-popover-progress-text {
   color: var(--muted-foreground) !important;
+  font-size: 12px !important;
+}
+
+.driver-popover-footer {
+  margin-top: 14px !important;
+}
+
+.driver-popover-navigation-btns {
+  gap: 6px;
+}
+
+.driver-popover-navigation-btns button {
+  color: var(--foreground) !important;
+  text-shadow: none !important;
+  border: 1px solid var(--stroke) !important;
+  padding: 0 12px !important;
+  height: 32px !important;
+  border-radius: 0.75rem !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background-color: var(--card) !important;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease !important;
+}
+
+.driver-popover-navigation-btns button:hover,
+.driver-popover-navigation-btns button:focus-visible {
+  background-color: var(--accent) !important;
+  border-color: var(--stroke-power-on) !important;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--stroke-power-on) 42%, var(--card)) !important;
 }
 
 .driver-popover-prev-btn {
-  color: white !important;
-  text-shadow: none !important;
-  border: none !important;
-  padding: 8px !important;
-  border-radius: 5px !important;
-  font-size: 12px !important;
-  background-color: var(--primary) !important;
+  color: var(--foreground) !important;
 }
 
 .driver-popover-next-btn {
-  color: white !important;
-  text-shadow: none !important;
-  border: none !important;
-  padding: 8px !important;
-  border-radius: 5px !important;
-  font-size: 12px !important;
-  background-color: var(--primary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--stroke-power-on) !important;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--gradient-start-power-on) 56%, transparent),
+      color-mix(in oklab, var(--gradient-end-power-on) 56%, transparent)
+    ) !important;
+}
+
+.driver-popover-next-btn:hover,
+.driver-popover-next-btn:focus-visible {
+  filter: brightness(1.04);
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--stroke-power-on) 48%, var(--card)),
+    0 8px 20px color-mix(in oklab, var(--gradient-end-power-on) 24%, var(--card)) !important;
+}
+
+.driver-popover-footer .driver-popover-btn-disabled {
+  opacity: 0.45 !important;
 }
 
 .driver-popover-arrow-side-bottom {
-  border-bottom-color: var(--popover) !important;
+  border-bottom-color: var(--card) !important;
 }
 
 .driver-popover-arrow-side-top {
-  border-top-color: var(--popover) !important;
+  border-top-color: var(--card) !important;
 }
 
 .driver-popover-arrow-side-left {
-  border-left-color: var(--popover) !important;
+  border-left-color: var(--card) !important;
 }
 
 .driver-popover-arrow-side-right {
-  border-right-color: var(--popover) !important;
+  border-right-color: var(--card) !important;
 }
 .app-nodrag {
   -webkit-app-region: none;

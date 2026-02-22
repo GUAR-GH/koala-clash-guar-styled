@@ -186,6 +186,7 @@ const Home: React.FC = () => {
             </p>
             <button
               onClick={handleAddProfile}
+              data-guide="home-add-profile-btn"
               className="flex items-center gap-2 rounded-xl border border-stroke bg-gradient-start-power-on/50 backdrop-blur-xl px-6 py-3 text-foreground hover:bg-gradient-start-power-on/40 transition-colors"
             >
               <PlusCircle className="size-5" />
@@ -213,7 +214,10 @@ const Home: React.FC = () => {
           {/* Profile card */}
           {currentProfile && (
             <div className="rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-4">
-              <div className="flex items-center justify-center gap-3 mb-2">
+              <div
+                data-guide="home-profile-header"
+                className="flex items-center justify-center gap-3 mb-2"
+              >
                 {(currentProfile.logo || currentProfile.home) && (
                   <img
                     src={
@@ -230,7 +234,9 @@ const Home: React.FC = () => {
                 <span className="font-medium text-base">{currentProfile.name}</span>
               </div>
               {currentProfile.announce && (
-                <div className="text-sm font-medium text-center">{currentProfile.announce}</div>
+                <div data-guide="home-profile-announce" className="text-sm font-medium text-center">
+                  {currentProfile.announce}
+                </div>
               )}
               {/* Subscription info */}
             </div>
@@ -271,6 +277,7 @@ const Home: React.FC = () => {
             <button
               disabled={isDisabled}
               onClick={() => onValueChange(!isSelected)}
+              data-guide="home-power-toggle"
               className="relative group transition-transform active:scale-95"
             >
               <div
@@ -331,7 +338,11 @@ const Home: React.FC = () => {
           {/* Group & Proxy selectors */}
           {firstGroup && (
             <div className="flag-emoji flex flex-col grow items-center gap-3 pb-2 mx-auto w-full max-w-3xs max-h-16">
-              <div className="w-full cursor-pointer" onClick={() => navigate('/proxies')}>
+              <div
+                data-guide="home-group-selector"
+                className="w-full cursor-pointer"
+                onClick={() => navigate('/proxies')}
+              >
                 <div className="flex items-center justify-between h-9 rounded-2xl border border-stroke pl-3 pr-1 py-3 backdrop-blur-xl bg-card/50">
                   <div className="text-sm truncate max-w-52">{firstGroup.now || '—'}</div>
 
@@ -343,6 +354,7 @@ const Home: React.FC = () => {
           {supportLinkInfo && (
             <div className="flex justify-center text-sm text-muted-foreground">
               <button
+                data-guide="home-support-link"
                 type="button"
                 onClick={() => open(supportLinkInfo.href)}
                 className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"

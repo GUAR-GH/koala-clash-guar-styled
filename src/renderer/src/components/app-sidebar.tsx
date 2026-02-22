@@ -61,7 +61,13 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
     : navItems.filter((item) => allowedWithoutProfiles.has(item.key))
 
   return (
-    <Sidebar collapsible="icon" side="left" variant="floating" className="pt-[57px]">
+    <Sidebar
+      data-guide="app-sidebar"
+      collapsible="icon"
+      side="left"
+      variant="floating"
+      className="pt-[57px]"
+    >
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -74,6 +80,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
                     <SidebarMenuButton
                       tooltip={t(item.i18nKey)}
                       isActive={isActive}
+                      data-guide={item.key === 'main' ? 'sidebar-home-button' : undefined}
                       onClick={() => navigate(item.path)}
                       onDoubleClick={
                         item.key === 'profile' ? () => setShowRuntimeConfig(true) : undefined

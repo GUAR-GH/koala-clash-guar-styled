@@ -183,6 +183,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
               <div className="flex flex-col gap-1.5">
                 <div className="relative">
                   <Input
+                    data-guide="profile-import-url-input"
                     className={cn(
                       'h-9 pr-9',
                       urlInvalid && 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50'
@@ -198,6 +199,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        data-guide="profile-import-paste-btn"
                         type="button"
                         variant="ghost"
                         size="icon-sm"
@@ -421,7 +423,12 @@ const EditInfoModal: React.FC<Props> = (props) => {
               {t('common.cancel')}
             </Button>
           </DialogClose>
-          <Button size="sm" onClick={onSave} disabled={!canImport || saving}>
+          <Button
+            size="sm"
+            onClick={onSave}
+            disabled={!canImport || saving}
+            data-guide={isNew ? 'profile-import-submit' : undefined}
+          >
             <span className="relative inline-flex items-center justify-center">
               {saving && <Spinner className="size-4 absolute" />}
               <span className={saving ? 'invisible' : undefined}>

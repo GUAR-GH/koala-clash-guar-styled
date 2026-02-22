@@ -1,190 +1,460 @@
 import type { NavigateFunction } from 'react-router-dom'
 import { t } from 'i18next'
+import { toast } from 'sonner'
+
+type PopoverButton = 'next' | 'previous' | 'close'
+
+type PopoverConfig = {
+  title?: string
+  description?: string
+  side?: 'top' | 'right' | 'bottom' | 'left' | 'over'
+  align?: 'start' | 'center' | 'end'
+  showButtons?: PopoverButton[]
+  onNextClick?: (element: Element | undefined, step: DriveStep, options: DriverStepOptions) => void
+}
+
+type DriveStep = {
+  element?: string | Element | (() => Element | null)
+  popover?: PopoverConfig
+  onHighlighted?: (
+    element: Element | undefined,
+    step: DriveStep,
+    options: DriverStepOptions
+  ) => void
+  onDeselected?: (
+    element: Element | undefined,
+    step: DriveStep,
+    options: DriverStepOptions
+  ) => void
+}
+
+type DriverConfig = {
+  showProgress?: boolean
+  showButtons?: PopoverButton[]
+  allowClose?: boolean
+  nextBtnText?: string
+  prevBtnText?: string
+  doneBtnText?: string
+  progressText?: string
+  overlayOpacity?: number
+  steps: DriveStep[]
+  onDestroyed?: () => void
+}
 
 type Driver = {
-  drive: () => void
+  drive: (stepIndex?: number) => void
   destroy: () => void
   moveNext: () => void
+  refresh?: () => void
+}
+
+type DriverFactory = (config: DriverConfig) => Driver
+
+type DriverStepOptions = {
+  driver: Driver
+}
+
+type AutoClickStepOptions = {
+  element: string | (() => Element | null)
+  title: string
+  description: string
+  side?: 'top' | 'right' | 'bottom' | 'left' | 'over'
+  align?: 'start' | 'center' | 'end'
+  waitFor?: string | string[]
+  afterClick?: () => Promise<void> | void
 }
 
 let driverInstance: Driver | null = null
 let cssLoaded = false
 
-async function loadDriverModule(): Promise<typeof import('driver.js')> {
+const GUIDE_SELECTORS = {
+  addProfileButton: '[data-guide="home-add-profile-btn"]',
+  profileImportUrlInput: '[data-guide="profile-import-url-input"]',
+  profileImportPasteButton: '[data-guide="profile-import-paste-btn"]',
+  profileImportButton: '[data-guide="profile-import-submit"]',
+  profileHeader: '[data-guide="home-profile-header"]',
+  profileAnnounce: '[data-guide="home-profile-announce"]',
+  powerButton: '[data-guide="home-power-toggle"]',
+  groupSelector: '[data-guide="home-group-selector"]',
+  supportButton: '[data-guide="home-support-link"]',
+  firstProxyGroup: '[data-guide="proxies-first-group"]',
+  firstProxyGroupRows: '[data-guide="proxies-first-group-row"]',
+  sidebar: '[data-guide="app-sidebar"]',
+  sidebarHomeButton: '[data-guide="sidebar-home-button"]'
+} as const
+
+const WAIT_TIMEOUT_MS = 45_000
+const WAIT_INTERVAL_MS = 120
+const FIRST_PROXY_GROUP_OVERLAY_ID = 'guide-first-group-overlay'
+
+async function loadDriverModule(): Promise<{ driver: DriverFactory }> {
   if (!cssLoaded) {
     await import('driver.js/dist/driver.css')
     cssLoaded = true
   }
-  return import('driver.js')
+  return import('driver.js') as Promise<{ driver: DriverFactory }>
 }
 
-export async function createDriver(navigate: NavigateFunction): Promise<Driver> {
-  if (driverInstance) return driverInstance
+function resolveElement(selector: string): Element | null {
+  return document.querySelector(selector)
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function waitForAnyElement(selectors: readonly string[], timeoutMs = WAIT_TIMEOUT_MS): Promise<Element> {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now()
+
+    const check = (): void => {
+      const element = selectors.map(resolveElement).find(Boolean)
+      if (element) {
+        resolve(element)
+        return
+      }
+
+      if (Date.now() - startTime >= timeoutMs) {
+        reject(new Error(`Guide timeout waiting for ${selectors.join(', ')}`))
+        return
+      }
+
+      setTimeout(check, WAIT_INTERVAL_MS)
+    }
+
+    check()
+  })
+}
+
+function waitForElement(selector: string, timeoutMs = WAIT_TIMEOUT_MS): Promise<Element> {
+  return waitForAnyElement([selector], timeoutMs)
+}
+
+function isValidHttpUrl(value: string): boolean {
+  if (!value) return false
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function removeFirstProxyGroupOverlay(): void {
+  document.getElementById(FIRST_PROXY_GROUP_OVERLAY_ID)?.remove()
+}
+
+function getFirstProxyGroupHighlightElement(): Element | null {
+  const firstGroupHeader = resolveElement(GUIDE_SELECTORS.firstProxyGroup)
+  if (!firstGroupHeader) return null
+
+  const headerRect = firstGroupHeader.getBoundingClientRect()
+  const rowRects = Array.from(document.querySelectorAll(GUIDE_SELECTORS.firstProxyGroupRows))
+    .map((element) => element.getBoundingClientRect())
+    .filter((rect) => rect.width > 0 && rect.height > 0)
+
+  const allRects = [headerRect, ...rowRects].filter((rect) => rect.width > 0 && rect.height > 0)
+  if (allRects.length === 0) return firstGroupHeader
+
+  const margin = 8
+  const top = Math.max(0, Math.min(...allRects.map((rect) => rect.top)) - margin)
+  const left = Math.max(0, Math.min(...allRects.map((rect) => rect.left)) - margin)
+  const right = Math.min(window.innerWidth, Math.max(...allRects.map((rect) => rect.right)) + margin)
+  const bottom = Math.min(
+    window.innerHeight,
+    Math.max(...allRects.map((rect) => rect.bottom)) + margin
+  )
+
+  let overlay = document.getElementById(FIRST_PROXY_GROUP_OVERLAY_ID) as HTMLDivElement | null
+  if (!overlay) {
+    overlay = document.createElement('div')
+    overlay.id = FIRST_PROXY_GROUP_OVERLAY_ID
+    overlay.style.position = 'fixed'
+    overlay.style.pointerEvents = 'none'
+    overlay.style.background = 'transparent'
+    overlay.style.borderRadius = '16px'
+    overlay.style.zIndex = '2147483640'
+    document.body.appendChild(overlay)
+  }
+
+  overlay.style.top = `${top}px`
+  overlay.style.left = `${left}px`
+  overlay.style.width = `${Math.max(0, right - left)}px`
+  overlay.style.height = `${Math.max(0, bottom - top)}px`
+
+  return overlay
+}
+
+function createAutoClickStep({
+  element,
+  title,
+  description,
+  side = 'bottom',
+  align = 'center',
+  waitFor,
+  afterClick
+}: AutoClickStepOptions): DriveStep {
+  let detachClickListener: (() => void) | null = null
+  let isWaiting = false
+
+  const waitForTarget = async (): Promise<void> => {
+    if (waitFor) {
+      if (Array.isArray(waitFor)) {
+        await waitForAnyElement(waitFor)
+      } else {
+        await waitForElement(waitFor)
+      }
+    }
+
+    await afterClick?.()
+  }
+
+  return {
+    element,
+    popover: {
+      title,
+      description,
+      side,
+      align,
+      showButtons: ['previous']
+    },
+    onHighlighted: (highlightedElement, _step, options): void => {
+      detachClickListener?.()
+      isWaiting = false
+
+      if (!highlightedElement) return
+
+      const onClick = async (): Promise<void> => {
+        if (isWaiting) return
+        isWaiting = true
+
+        try {
+          await waitForTarget()
+          options.driver.moveNext()
+        } catch {
+          isWaiting = false
+        }
+      }
+
+      highlightedElement.addEventListener('click', onClick)
+      detachClickListener = (): void => {
+        highlightedElement.removeEventListener('click', onClick)
+      }
+    },
+    onDeselected: (): void => {
+      detachClickListener?.()
+      detachClickListener = null
+      isWaiting = false
+    }
+  }
+}
+
+function buildGuideSteps(): DriveStep[] {
+  const hasNoProfilesState = Boolean(resolveElement(GUIDE_SELECTORS.addProfileButton))
+  const steps: DriveStep[] = [
+    {
+      popover: {
+        title: t('guide.welcome'),
+        description: t('guide.welcomeDesc'),
+        side: 'over',
+        align: 'center'
+      }
+    }
+  ]
+
+  if (hasNoProfilesState) {
+    steps.push(
+      createAutoClickStep({
+        element: GUIDE_SELECTORS.addProfileButton,
+        title: t('guide.addProfileTitle'),
+        description: t('guide.addProfileDesc'),
+        side: 'top',
+        waitFor: GUIDE_SELECTORS.profileImportUrlInput
+      }),
+      {
+        element: GUIDE_SELECTORS.profileImportPasteButton,
+        popover: {
+          title: t('guide.insertLinkTitle'),
+          description: t('guide.insertLinkDesc'),
+          side: 'left',
+          align: 'center',
+          onNextClick: (_element, _step, options): void => {
+            const urlInput = resolveElement(
+              GUIDE_SELECTORS.profileImportUrlInput
+            ) as HTMLInputElement | null
+            if (!urlInput || !isValidHttpUrl(urlInput.value.trim())) {
+              toast.error(t('guide.validLinkRequired'))
+              return
+            }
+
+            options.driver.moveNext()
+          }
+        }
+      },
+      createAutoClickStep({
+        element: GUIDE_SELECTORS.profileImportButton,
+        title: t('guide.importProfileTitle'),
+        description: t('guide.importProfileDesc'),
+        side: 'top',
+        waitFor: GUIDE_SELECTORS.profileHeader
+      })
+    )
+  }
+
+  steps.push(
+    {
+      element: () =>
+        resolveElement(GUIDE_SELECTORS.profileHeader) ?? resolveElement(GUIDE_SELECTORS.powerButton),
+      popover: {
+        title: t('guide.profileHeaderTitle'),
+        description: t('guide.profileHeaderDesc'),
+        side: 'bottom'
+      }
+    },
+    {
+      element: () =>
+        resolveElement(GUIDE_SELECTORS.profileAnnounce) ??
+        resolveElement(GUIDE_SELECTORS.profileHeader) ??
+        resolveElement(GUIDE_SELECTORS.powerButton),
+      popover: {
+        title: t('guide.profileAnnounceTitle'),
+        description: t('guide.profileAnnounceDesc'),
+        side: 'bottom'
+      }
+    },
+    createAutoClickStep({
+      element: GUIDE_SELECTORS.powerButton,
+      title: t('guide.powerButtonTitle'),
+      description: t('guide.powerButtonDesc'),
+      side: 'top',
+      waitFor: GUIDE_SELECTORS.groupSelector,
+      afterClick: () => sleep(500)
+    }),
+    createAutoClickStep({
+      element: GUIDE_SELECTORS.groupSelector,
+      title: t('guide.groupSelectorTitle'),
+      description: t('guide.groupSelectorDesc'),
+      side: 'top',
+      waitFor: GUIDE_SELECTORS.firstProxyGroup
+    }),
+    {
+      element: GUIDE_SELECTORS.firstProxyGroup,
+      popover: {
+        title: t('guide.firstGroupTitle'),
+        description: t('guide.firstGroupDesc'),
+        side: 'bottom',
+        align: 'start',
+        onNextClick: (_element, _step, options): void => {
+          const firstGroup = resolveElement(GUIDE_SELECTORS.firstProxyGroup)
+          const isGroupOpened = firstGroup?.getAttribute('data-guide-open') === 'true'
+
+          if (!isGroupOpened) {
+            toast.error(t('guide.openGroupRequired'))
+            return
+          }
+
+          window.setTimeout(() => {
+            options.driver.moveNext()
+          }, 140)
+        }
+      }
+    },
+    {
+      element: () =>
+        getFirstProxyGroupHighlightElement() ?? resolveElement(GUIDE_SELECTORS.firstProxyGroup),
+      popover: {
+        title: t('guide.firstGroupExpandedTitle'),
+        description: t('guide.firstGroupExpandedDesc'),
+        side: 'bottom',
+        align: 'start'
+      },
+      onHighlighted: (_element, _step, options): void => {
+        window.setTimeout(() => {
+          getFirstProxyGroupHighlightElement()
+          options.driver.refresh?.()
+        }, 60)
+      },
+      onDeselected: (): void => {
+        removeFirstProxyGroupOverlay()
+      }
+    },
+    {
+      element: GUIDE_SELECTORS.sidebar,
+      popover: {
+        title: t('guide.sidebarTitle'),
+        description: t('guide.sidebarDesc'),
+        side: 'right'
+      }
+    },
+    createAutoClickStep({
+      element: GUIDE_SELECTORS.sidebarHomeButton,
+      title: t('guide.sidebarHomeTitle'),
+      description: t('guide.sidebarHomeDesc'),
+      side: 'right',
+      waitFor: [GUIDE_SELECTORS.powerButton, GUIDE_SELECTORS.addProfileButton]
+    }),
+    {
+      element: GUIDE_SELECTORS.supportButton,
+      popover: {
+        title: t('guide.supportTitle'),
+        description: t('guide.supportDesc'),
+        side: 'top',
+        align: 'center'
+      }
+    },
+    {
+      popover: {
+        title: t('guide.tutorialEnd'),
+        description: t('guide.tutorialEndDesc'),
+        side: 'over',
+        align: 'center'
+      }
+    }
+  )
+
+  return steps
+}
+
+export async function createDriver(_navigate: NavigateFunction): Promise<Driver> {
+  if (driverInstance) {
+    driverInstance.destroy()
+    driverInstance = null
+  }
 
   const { driver } = await loadDriverModule()
 
   driverInstance = driver({
+    allowClose: false,
     showProgress: true,
+    showButtons: ['next', 'previous'],
     nextBtnText: t('guide.nextStep'),
     prevBtnText: t('guide.prevStep'),
     doneBtnText: t('guide.done'),
     progressText: '{{current}} / {{total}}',
     overlayOpacity: 0.9,
-    steps: [
-      {
-        element: 'none',
-        popover: {
-          title: t('guide.welcome'),
-          description: t('guide.welcomeDesc'),
-          side: 'over',
-          align: 'center'
-        }
-      },
-      {
-        element: '.side',
-        popover: {
-          title: t('guide.navbar'),
-          description: t('guide.navbarDesc'),
-          side: 'right',
-          align: 'center'
-        }
-      },
-      {
-        element: '.sysproxy-card',
-        popover: {
-          title: t('guide.card'),
-          description: t('guide.cardDesc'),
-          side: 'right',
-          align: 'start'
-        }
-      },
-      {
-        element: '.main',
-        popover: {
-          title: t('guide.mainArea'),
-          description: t('guide.mainAreaDesc'),
-          side: 'left',
-          align: 'center'
-        }
-      },
-      {
-        element: '.profile-card',
-        popover: {
-          title: t('guide.profileManagement'),
-          description: t('guide.profileManagementDesc'),
-          side: 'right',
-          align: 'start',
-          onNextClick: async (): Promise<void> => {
-            navigate('/profiles')
-            setTimeout(() => {
-              driverInstance?.moveNext()
-            }, 0)
-          }
-        }
-      },
-      {
-        element: '.profiles-sticky',
-        popover: {
-          title: t('guide.profileImport'),
-          description: t('guide.profileImportDesc'),
-          side: 'bottom',
-          align: 'start'
-        }
-      },
-      {
-        element: '.new-profile',
-        popover: {
-          title: t('guide.localProfile'),
-          description: t('guide.localProfileDesc'),
-          side: 'bottom',
-          align: 'start'
-        }
-      },
-      {
-        element: '.sysproxy-card',
-        popover: {
-          title: t('guide.sysProxy'),
-          description: t('guide.sysProxyDesc'),
-          side: 'right',
-          align: 'start',
-          onNextClick: async (): Promise<void> => {
-            navigate('/sysproxy')
-            setTimeout(() => {
-              driverInstance?.moveNext()
-            }, 0)
-          }
-        }
-      },
-      {
-        element: '.sysproxy-settings',
-        popover: {
-          title: t('guide.sysProxySettings'),
-          description: t('guide.sysProxySettingsDesc'),
-          side: 'top',
-          align: 'start'
-        }
-      },
-      {
-        element: '.tun-card',
-        popover: {
-          title: t('guide.tun'),
-          description: t('guide.tunDesc'),
-          side: 'right',
-          align: 'start',
-          onNextClick: async (): Promise<void> => {
-            navigate('/tun')
-            setTimeout(() => {
-              driverInstance?.moveNext()
-            }, 0)
-          }
-        }
-      },
-      {
-        element: '.tun-settings',
-        popover: {
-          title: t('guide.tunSettings'),
-          description: t('guide.tunSettingsDesc'),
-          side: 'bottom',
-          align: 'start'
-        }
-      },
-      {
-        element: '.dns-card',
-        popover: {
-          title: 'DNS',
-          description: t('guide.dnsDesc'),
-          side: 'right',
-          align: 'center',
-          onNextClick: async (): Promise<void> => {
-            navigate('/profiles')
-            setTimeout(() => {
-              driverInstance?.moveNext()
-            }, 0)
-          }
-        }
-      },
-      {
-        element: 'none',
-        popover: {
-          title: t('guide.tutorialEnd'),
-          description: t('guide.tutorialEndDesc'),
-          side: 'top',
-          align: 'center',
-          onNextClick: async (): Promise<void> => {
-            navigate('/profiles')
-            setTimeout(() => {
-              driverInstance?.destroy()
-            }, 0)
-          }
-        }
-      }
-    ]
+    steps: buildGuideSteps(),
+    onDestroyed: (): void => {
+      removeFirstProxyGroupOverlay()
+      driverInstance = null
+    }
   })
 
   return driverInstance
 }
 
 export async function startTour(navigate: NavigateFunction): Promise<void> {
+  navigate('/home')
+  await sleep(120)
+
+  try {
+    await waitForAnyElement(
+      [GUIDE_SELECTORS.addProfileButton, GUIDE_SELECTORS.powerButton],
+      15_000
+    )
+  } catch {
+    // ignore and let driver fallback to dynamic element resolvers
+  }
+
   const d = await createDriver(navigate)
   d.drive()
 }
