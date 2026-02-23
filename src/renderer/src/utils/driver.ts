@@ -21,11 +21,7 @@ type DriveStep = {
     step: DriveStep,
     options: DriverStepOptions
   ) => void
-  onDeselected?: (
-    element: Element | undefined,
-    step: DriveStep,
-    options: DriverStepOptions
-  ) => void
+  onDeselected?: (element: Element | undefined, step: DriveStep, options: DriverStepOptions) => void
 }
 
 type DriverConfig = {
@@ -64,14 +60,20 @@ type AutoClickStepOptions = {
   afterClick?: () => Promise<void> | void
 }
 
+type GuideMode = 'default' | 'deep-link'
+
 let driverInstance: Driver | null = null
 let cssLoaded = false
+let guideMode: GuideMode = 'default'
+let stopGuideModeObserver: (() => void) | null = null
+let isSwitchingGuideMode = false
 
 const GUIDE_SELECTORS = {
   addProfileButton: '[data-guide="home-add-profile-btn"]',
   profileImportUrlInput: '[data-guide="profile-import-url-input"]',
   profileImportPasteButton: '[data-guide="profile-import-paste-btn"]',
   profileImportButton: '[data-guide="profile-import-submit"]',
+  profileInstallConfirmModal: '.guide-profile-install-modal',
   profileHeader: '[data-guide="home-profile-header"]',
   profileAnnounce: '[data-guide="home-profile-announce"]',
   powerButton: '[data-guide="home-power-toggle"]',
@@ -86,6 +88,11 @@ const GUIDE_SELECTORS = {
 const WAIT_TIMEOUT_MS = 45_000
 const WAIT_INTERVAL_MS = 120
 const FIRST_PROXY_GROUP_OVERLAY_ID = 'guide-first-group-overlay'
+
+function clearGuideModeObserver(): void {
+  stopGuideModeObserver?.()
+  stopGuideModeObserver = null
+}
 
 async function loadDriverModule(): Promise<{ driver: DriverFactory }> {
   if (!cssLoaded) {
@@ -103,7 +110,10 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function waitForAnyElement(selectors: readonly string[], timeoutMs = WAIT_TIMEOUT_MS): Promise<Element> {
+function waitForAnyElement(
+  selectors: readonly string[],
+  timeoutMs = WAIT_TIMEOUT_MS
+): Promise<Element> {
   return new Promise((resolve, reject) => {
     const startTime = Date.now()
 
@@ -159,7 +169,10 @@ function getFirstProxyGroupHighlightElement(): Element | null {
   const margin = 8
   const top = Math.max(0, Math.min(...allRects.map((rect) => rect.top)) - margin)
   const left = Math.max(0, Math.min(...allRects.map((rect) => rect.left)) - margin)
-  const right = Math.min(window.innerWidth, Math.max(...allRects.map((rect) => rect.right)) + margin)
+  const right = Math.min(
+    window.innerWidth,
+    Math.max(...allRects.map((rect) => rect.right)) + margin
+  )
   const bottom = Math.min(
     window.innerHeight,
     Math.max(...allRects.map((rect) => rect.bottom)) + margin
@@ -249,39 +262,92 @@ function createAutoClickStep({
   }
 }
 
-function buildGuideSteps(): DriveStep[] {
+function buildGuideSteps(mode: GuideMode = 'default'): DriveStep[] {
   const hasNoProfilesState = Boolean(resolveElement(GUIDE_SELECTORS.addProfileButton))
-  const steps: DriveStep[] = [
-    {
+  const steps: DriveStep[] = []
+
+  if (mode === 'default') {
+    steps.push({
       popover: {
         title: t('guide.welcome'),
         description: t('guide.welcomeDesc'),
         side: 'over',
         align: 'center'
       }
-    }
-  ]
+    })
+  }
 
-  if (hasNoProfilesState) {
-    steps.push(
-      createAutoClickStep({
-        element: GUIDE_SELECTORS.addProfileButton,
-        title: t('guide.addProfileTitle'),
-        description: t('guide.addProfileDesc'),
+  if (mode === 'deep-link') {
+    steps.push({
+      element: () =>
+        resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+        resolveElement(GUIDE_SELECTORS.profileHeader) ??
+        resolveElement(GUIDE_SELECTORS.powerButton),
+      popover: {
+        title: t('guide.deepLinkImportTitle'),
+        description: t('guide.deepLinkImportDesc'),
         side: 'top',
-        waitFor: GUIDE_SELECTORS.profileImportUrlInput
-      }),
+        onNextClick: (_element, _step, options): void => {
+          if (!resolveElement(GUIDE_SELECTORS.profileHeader)) {
+            toast.error(t('guide.deepLinkConfirmRequired'))
+            return
+          }
+          options.driver.moveNext()
+        }
+      }
+    })
+  } else if (hasNoProfilesState) {
+    steps.push(
       {
-        element: GUIDE_SELECTORS.profileImportPasteButton,
+        element: () =>
+          resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+          resolveElement(GUIDE_SELECTORS.addProfileButton),
+        popover: {
+          title: t('guide.addProfileTitle'),
+          description: t('guide.addProfileDesc'),
+          side: 'top',
+          onNextClick: (_element, _step, options): void => {
+            const hasImportFlow = Boolean(
+              resolveElement(GUIDE_SELECTORS.profileImportUrlInput) ??
+              resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+              resolveElement(GUIDE_SELECTORS.profileHeader)
+            )
+            if (!hasImportFlow) {
+              toast.error(t('guide.openImportFlowRequired'))
+              return
+            }
+
+            options.driver.moveNext()
+          }
+        }
+      },
+      {
+        element: () =>
+          resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+          resolveElement(GUIDE_SELECTORS.profileImportPasteButton) ??
+          resolveElement(GUIDE_SELECTORS.profileHeader) ??
+          resolveElement(GUIDE_SELECTORS.powerButton),
         popover: {
           title: t('guide.insertLinkTitle'),
           description: t('guide.insertLinkDesc'),
           side: 'left',
           align: 'center',
           onNextClick: (_element, _step, options): void => {
+            const profileHeader = resolveElement(GUIDE_SELECTORS.profileHeader)
             const urlInput = resolveElement(
               GUIDE_SELECTORS.profileImportUrlInput
             ) as HTMLInputElement | null
+
+            if (profileHeader && !urlInput) {
+              options.driver.moveNext()
+              return
+            }
+
+            if (resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) {
+              options.driver.moveNext()
+              return
+            }
+
             if (!urlInput || !isValidHttpUrl(urlInput.value.trim())) {
               toast.error(t('guide.validLinkRequired'))
               return
@@ -291,20 +357,33 @@ function buildGuideSteps(): DriveStep[] {
           }
         }
       },
-      createAutoClickStep({
-        element: GUIDE_SELECTORS.profileImportButton,
-        title: t('guide.importProfileTitle'),
-        description: t('guide.importProfileDesc'),
-        side: 'top',
-        waitFor: GUIDE_SELECTORS.profileHeader
-      })
+      {
+        element: () =>
+          resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+          resolveElement(GUIDE_SELECTORS.profileImportButton) ??
+          resolveElement(GUIDE_SELECTORS.profileHeader) ??
+          resolveElement(GUIDE_SELECTORS.powerButton),
+        popover: {
+          title: t('guide.importProfileTitle'),
+          description: t('guide.importProfileDesc'),
+          side: 'top',
+          onNextClick: (_element, _step, options): void => {
+            if (!resolveElement(GUIDE_SELECTORS.profileHeader)) {
+              toast.error(t('guide.completeImportRequired'))
+              return
+            }
+            options.driver.moveNext()
+          }
+        }
+      }
     )
   }
 
   steps.push(
     {
       element: () =>
-        resolveElement(GUIDE_SELECTORS.profileHeader) ?? resolveElement(GUIDE_SELECTORS.powerButton),
+        resolveElement(GUIDE_SELECTORS.profileHeader) ??
+        resolveElement(GUIDE_SELECTORS.powerButton),
       popover: {
         title: t('guide.profileHeaderTitle'),
         description: t('guide.profileHeaderDesc'),
@@ -415,7 +494,7 @@ function buildGuideSteps(): DriveStep[] {
   return steps
 }
 
-export async function createDriver(_navigate: NavigateFunction): Promise<Driver> {
+async function createDriverWithMode(mode: GuideMode): Promise<Driver> {
   if (driverInstance) {
     driverInstance.destroy()
     driverInstance = null
@@ -423,6 +502,7 @@ export async function createDriver(_navigate: NavigateFunction): Promise<Driver>
 
   const { driver } = await loadDriverModule()
 
+  guideMode = mode
   driverInstance = driver({
     allowClose: false,
     showProgress: true,
@@ -432,14 +512,59 @@ export async function createDriver(_navigate: NavigateFunction): Promise<Driver>
     doneBtnText: t('guide.done'),
     progressText: '{{current}} / {{total}}',
     overlayOpacity: 0.9,
-    steps: buildGuideSteps(),
+    steps: buildGuideSteps(mode),
     onDestroyed: (): void => {
       removeFirstProxyGroupOverlay()
+      clearGuideModeObserver()
+      guideMode = 'default'
       driverInstance = null
     }
   })
+  if (mode === 'default') {
+    startGuideModeObserverLoop(driverInstance)
+  }
 
   return driverInstance
+}
+
+async function restartGuideInMode(mode: GuideMode): Promise<void> {
+  if (isSwitchingGuideMode || guideMode === mode) return
+
+  isSwitchingGuideMode = true
+  try {
+    const d = await createDriverWithMode(mode)
+    d.drive()
+  } finally {
+    isSwitchingGuideMode = false
+  }
+}
+
+function switchToDeepLinkGuide(driver: Driver): void {
+  if (guideMode === 'deep-link' || isSwitchingGuideMode) return
+  if (driver !== driverInstance) return
+  if (!resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) return
+
+  void restartGuideInMode('deep-link')
+}
+
+function startGuideModeObserverLoop(driver: Driver): void {
+  clearGuideModeObserver()
+
+  if (guideMode !== 'default') return
+  if (typeof MutationObserver === 'undefined') return
+  if (!document.body) return
+
+  const observer = new MutationObserver(() => {
+    switchToDeepLinkGuide(driver)
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+  stopGuideModeObserver = (): void => {
+    observer.disconnect()
+  }
+}
+
+export async function createDriver(_navigate: NavigateFunction): Promise<Driver> {
+  return createDriverWithMode('default')
 }
 
 export async function startTour(navigate: NavigateFunction): Promise<void> {
@@ -448,7 +573,11 @@ export async function startTour(navigate: NavigateFunction): Promise<void> {
 
   try {
     await waitForAnyElement(
-      [GUIDE_SELECTORS.addProfileButton, GUIDE_SELECTORS.powerButton],
+      [
+        GUIDE_SELECTORS.addProfileButton,
+        GUIDE_SELECTORS.powerButton,
+        GUIDE_SELECTORS.profileInstallConfirmModal
+      ],
       15_000
     )
   } catch {
@@ -457,4 +586,8 @@ export async function startTour(navigate: NavigateFunction): Promise<void> {
 
   const d = await createDriver(navigate)
   d.drive()
+
+  if (resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) {
+    await restartGuideInMode('deep-link')
+  }
 }

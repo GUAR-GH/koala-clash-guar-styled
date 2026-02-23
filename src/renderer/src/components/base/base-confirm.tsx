@@ -41,6 +41,11 @@ const ConfirmModal: React.FC<Props> = (props) => {
   const modalCancelText = cancelText || t('common.cancel')
   const actionButtonClassName =
     'w-full max-w-full whitespace-normal break-words text-center h-auto min-h-8 py-2 sm:w-auto'
+  const closeRef = React.useRef<HTMLButtonElement>(null)
+
+  const closeWithAnimation = (): void => {
+    closeRef.current?.click()
+  }
 
   const renderButtons = () => {
     if (buttons && buttons.length > 0) {
@@ -53,7 +58,7 @@ const ConfirmModal: React.FC<Props> = (props) => {
           className={actionButtonClassName}
           onClick={async () => {
             await button.onPress()
-            onChange(false)
+            closeWithAnimation()
           }}
         >
           {button.text}
@@ -76,7 +81,7 @@ const ConfirmModal: React.FC<Props> = (props) => {
             if (onConfirm) {
               await onConfirm()
             }
-            onChange(false)
+            closeWithAnimation()
           }}
         >
           {modalConfirmText}
@@ -88,6 +93,7 @@ const ConfirmModal: React.FC<Props> = (props) => {
   return (
     <Dialog open={true} onOpenChange={onChange}>
       <DialogContent className={cn('w-[min(420px,calc(100%-2rem))]', className)}>
+        <DialogClose ref={closeRef} className="hidden" />
         <DialogHeader>
           <DialogTitle>{modalTitle}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

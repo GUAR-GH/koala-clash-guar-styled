@@ -32,7 +32,6 @@ import {
 import {
   Check,
   Clock3,
-  CircleAlert,
   EllipsisVertical,
   ExternalLink,
   FileText,
@@ -370,10 +369,10 @@ const ProfileItem: React.FC<Props> = (props) => {
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <CircleAlert className="size-8 text-destructive" />
+              <Trash2 className="size-8 text-destructive" />
             </AlertDialogMedia>
             <AlertDialogTitle>{t('profile.confirmDeleteProfile')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="truncate max-w-3xs">
               {info.name}
             </AlertDialogDescription>
           </AlertDialogHeader>

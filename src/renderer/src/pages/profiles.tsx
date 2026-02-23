@@ -17,18 +17,7 @@ import {
 import { SortableContext } from '@dnd-kit/sortable'
 import ProfileSettingModal from '@renderer/components/profiles/profile-setting-modal'
 import { useTranslation } from 'react-i18next'
-import { Plus, FileDown, RefreshCcw, SlidersHorizontal, CircleAlert } from 'lucide-react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle
-} from '@renderer/components/ui/alert-dialog'
+import { Plus, FileDown, RefreshCcw, SlidersHorizontal } from 'lucide-react'
 
 const emptyItems: ProfileItem[] = []
 
@@ -40,9 +29,7 @@ const Profiles: React.FC = () => {
     addProfileItem,
     updateProfileItem,
     removeProfileItem,
-    changeCurrentProfile,
-    hwidLimitError,
-    clearHwidLimitError
+    changeCurrentProfile
   } = useProfileConfig()
   const { current, items } = profileConfig || {}
   const itemsArray = items ?? emptyItems
@@ -188,34 +175,6 @@ const Profiles: React.FC = () => {
       }
     >
       {isSettingModalOpen && <ProfileSettingModal onClose={() => setIsSettingModalOpen(false)} />}
-      <AlertDialog open={hwidLimitError !== null} onOpenChange={(open) => !open && clearHwidLimitError()}>
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <CircleAlert className="size-8 text-destructive" />
-            </AlertDialogMedia>
-            <AlertDialogTitle>{t('pages.profiles.hwidLimitTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('pages.profiles.hwidLimitDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={clearHwidLimitError}>
-              {t('common.close')}
-            </AlertDialogCancel>
-            {hwidLimitError && (
-              <AlertDialogAction
-                onClick={() => {
-                  open(hwidLimitError)
-                  clearHwidLimitError()
-                }}
-              >
-                {t('pages.profiles.support')}
-              </AlertDialogAction>
-            )}
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       {showEditModal && editingItem && (
         <EditInfoModal
           item={editingItem}
@@ -245,7 +204,7 @@ const Profiles: React.FC = () => {
       {sortedItems.length === 0 ? (
         <div className="h-full w-full flex justify-center items-center">
           <div className="flex flex-col items-center gap-3">
-            <Button className="rounded-full w-20 h-20" variant="outline" onClick={handleAddProfile}>
+            <Button className="rounded-full w-20 h-20 hover:bg-card" variant="outline" onClick={handleAddProfile}>
               <Plus className="text-muted-foreground size-10" />
             </Button>
             <h2 className="text-muted-foreground text-lg font-medium">

@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { useTheme } from 'next-themes'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { NavigateFunction, useLocation, useNavigate, useRoutes } from 'react-router-dom'
 import './i18n'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +13,7 @@ import useSWR from 'swr'
 import ConfirmModal from '@renderer/components/base/base-confirm'
 import { SidebarProvider } from '@renderer/components/ui/sidebar'
 import AppSidebar from '@renderer/components/app-sidebar'
+import HwidLimitAlert from '@renderer/components/profiles/hwid-limit-alert'
 import mapDark from '@renderer/assets/map_darktheme.svg'
 import mapLight from '@renderer/assets/map_lighttheme.svg'
 
@@ -78,6 +79,7 @@ const App: React.FC = () => {
   const [showQuitConfirm, setShowQuitConfirm] = useState(false)
   const [showProfileInstallConfirm, setShowProfileInstallConfirm] = useState(false)
   const [showAdminRequired, setShowAdminRequired] = useState(false)
+  const profileInstallConfirmedRef = useRef(false)
   const [profileInstallData, setProfileInstallData] = useState<{
     url: string
     name?: string | null
@@ -91,6 +93,7 @@ const App: React.FC = () => {
       _event: unknown,
       data: { url: string; name?: string | null }
     ): void => {
+      profileInstallConfirmedRef.current = false
       setProfileInstallData(data)
       setShowProfileInstallConfirm(true)
     }
@@ -172,27 +175,32 @@ const App: React.FC = () => {
         <ConfirmModal
           title={t('modal.confirmImportProfile')}
           description={
-            <div>
+            <div className="max-w-md">
               <p className="text-sm text-gray-600 mb-2">
                 {t('modal.nameLabel')}
                 {profileInstallData.name || t('common.unnamed')}
               </p>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-gray-600 mb-2 truncate">
                 {t('modal.linkLabel')}
                 {profileInstallData.url}
               </p>
-              <p className="text-sm text-orange-500 mt-2">{t('modal.ensureTrustedSource')}</p>
+              <p className="text-sm text-orange-500 mt-2 text-balance">
+                {t('modal.ensureTrustedSource')}
+              </p>
             </div>
           }
           confirmText={t('common.import')}
           cancelText={t('common.cancel')}
           onChange={(open) => {
             if (!open) {
-              handleProfileInstallConfirm(false)
+              handleProfileInstallConfirm(profileInstallConfirmedRef.current)
+              profileInstallConfirmedRef.current = false
             }
           }}
-          onConfirm={() => handleProfileInstallConfirm(true)}
-          className="w-[500px]"
+          onConfirm={() => {
+            profileInstallConfirmedRef.current = true
+          }}
+          className="min-w-lg guide-profile-install-modal"
         />
       )}
       {showAdminRequired && (
@@ -214,10 +222,9 @@ const App: React.FC = () => {
           }}
         />
       )}
+      <HwidLimitAlert />
       <AppSidebar latest={latest} />
-      <div className="relative z-10 main grow h-full overflow-y-auto">
-        {page}
-      </div>
+      <div className="relative z-10 main grow h-full overflow-y-auto">{page}</div>
     </SidebarProvider>
   )
 }

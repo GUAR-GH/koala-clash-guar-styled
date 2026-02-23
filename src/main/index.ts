@@ -18,8 +18,6 @@ import { existsSync, writeFileSync } from 'fs'
 import { exePath, taskDir } from './utils/dirs'
 import { showFloatingWindow } from './resolve/floatingWindow'
 import { getAppConfigSync } from './config/app'
-import { getUserAgent } from './utils/userAgent'
-import { getHWID, getDeviceOS, getOSVersion, getDeviceModel } from './utils/deviceInfo'
 import { t } from './utils/i18n'
 
 
@@ -353,6 +351,11 @@ async function handleDeepLink(url: string): Promise<void> {
           new Notification({ title: t('notification.profileImportSuccess') }).show()
         }
       } catch (e) {
+        const hwidLimitMatch = `${e}`.match(/HWID_LIMIT:(.*)/)
+        if (hwidLimitMatch && mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('show-hwid-limit-error', hwidLimitMatch[1].trim())
+          return
+        }
         showError(t('dialog.profileImportFailed'), `${url}\n${e}`)
       }
       break
@@ -370,18 +373,20 @@ async function showProfileInstallConfirm(url: string, name?: string | null): Pro
     try {
       const axios = (await import('axios')).default
       const response = await axios.head(url, {
-        headers: {
-          'User-Agent': await getUserAgent(),
-          'x-hwid': getHWID(),
-          'x-device-os': getDeviceOS(),
-          'x-ver-os': getOSVersion(),
-          'x-device-model': getDeviceModel()
-        },
         timeout: 5000
       })
 
-      if (response.headers['content-disposition']) {
-        extractedName = parseFilename(response.headers['content-disposition'])
+      if (response.headers['profile-title']) {
+        const titleValue = response.headers['profile-title']
+        if (titleValue.startsWith('base64:')) {
+          extractedName = Buffer.from(titleValue.slice(7), 'base64').toString('utf-8')
+        } else {
+          extractedName = titleValue
+        }
+      } else {
+        if (response.headers['content-disposition']) {
+          extractedName = parseFilename(response.headers['content-disposition'])
+        }
       }
     } catch (error) {
       // ignore

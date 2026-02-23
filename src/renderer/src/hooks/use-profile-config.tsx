@@ -30,6 +30,15 @@ export const ProfileConfigProvider: React.FC<{ children: ReactNode }> = ({ child
   )
   const [hwidLimitError, setHwidLimitError] = useState<string | null>(null)
 
+  const setHwidLimitErrorFromMessage = useCallback((message: string): void => {
+    const match = message.match(/HWID_LIMIT:(.*)/)
+    if (match) {
+      setHwidLimitError(match[1].trim())
+      return
+    }
+    setHwidLimitError(message.trim())
+  }, [])
+
   const clearHwidLimitError = useCallback(() => setHwidLimitError(null), [])
 
   const setProfileConfig = async (config: ProfileConfig): Promise<void> => {
@@ -48,8 +57,7 @@ export const ProfileConfigProvider: React.FC<{ children: ReactNode }> = ({ child
       await add(item)
     } catch (e) {
       if (`${e}`.includes('HWID_LIMIT')) {
-        const match = `${e}`.match(/HWID_LIMIT:(.*)/)
-        setHwidLimitError(match?.[1] ?? '')
+        setHwidLimitErrorFromMessage(`${e}`)
       } else {
         toast.error(`${e}`)
       }
@@ -93,13 +101,21 @@ export const ProfileConfigProvider: React.FC<{ children: ReactNode }> = ({ child
   }
 
   useEffect(() => {
-    window.electron.ipcRenderer.on('profileConfigUpdated', () => {
+    const handleProfileConfigUpdated = (): void => {
       mutateProfileConfig()
-    })
-    return (): void => {
-      window.electron.ipcRenderer.removeAllListeners('profileConfigUpdated')
     }
-  }, [])
+    const handleShowHwidLimitError = (_event: unknown, supportUrl = ''): void => {
+      setHwidLimitErrorFromMessage(supportUrl)
+    }
+
+    window.electron.ipcRenderer.on('profileConfigUpdated', handleProfileConfigUpdated)
+    window.electron.ipcRenderer.on('show-hwid-limit-error', handleShowHwidLimitError)
+
+    return (): void => {
+      window.electron.ipcRenderer.removeListener('profileConfigUpdated', handleProfileConfigUpdated)
+      window.electron.ipcRenderer.removeListener('show-hwid-limit-error', handleShowHwidLimitError)
+    }
+  }, [mutateProfileConfig, setHwidLimitErrorFromMessage])
 
   return (
     <ProfileConfigContext.Provider

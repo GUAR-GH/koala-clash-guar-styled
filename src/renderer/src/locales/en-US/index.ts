@@ -876,13 +876,22 @@ export default {
     prevStep: 'Previous',
     done: 'Done',
     addProfileTitle: 'Add Profile',
-    addProfileDesc: 'There are no profiles on Home yet. Click "Add Profile" to begin.',
+    addProfileDesc:
+      'There are no profiles on Home yet. Click "Add Profile" to begin, or use the deep-link import dialog if it appears.',
+    openImportFlowRequired:
+      'Open Add Profile or the deep-link import confirmation dialog before continuing.',
     insertLinkTitle: 'Paste From Clipboard',
     insertLinkDesc:
-      'Click the paste button on the right to insert your subscription link from clipboard, then click "Next".',
+      'Manual import: click the paste button to fill your subscription link, then click "Next". Deep-link import: if a confirmation dialog is open, click "Next" to continue.',
     validLinkRequired: 'Please enter a valid http/https link to continue.',
     importProfileTitle: 'Import Subscription',
-    importProfileDesc: 'Now click "Import" to add the subscription.',
+    importProfileDesc:
+      'Manual import: click "Import". Deep-link import: confirm the import in the dialog, then click "Next".',
+    completeImportRequired: 'Complete profile import before continuing.',
+    deepLinkImportTitle: 'Import Via Deep Link',
+    deepLinkImportDesc:
+      'A deep-link import dialog is open. Click "Import" in that dialog, then click "Next" here.',
+    deepLinkConfirmRequired: 'Confirm the deep-link import in the dialog before continuing.',
     profileHeaderTitle: 'Subscription Header',
     profileHeaderDesc: 'This area shows the logo and name of your VPN profile.',
     profileAnnounceTitle: 'Announcement',
