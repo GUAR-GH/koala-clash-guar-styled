@@ -36,6 +36,7 @@ export function showError(title: string, message: string): void {
     dialog.showErrorBox(title, message)
   }
 }
+let pendingDeepLink: string | null = null
 let isCreatingWindow = false
 let windowShown = false
 let createWindowPromiseResolve: (() => void) | null = null
@@ -140,17 +141,32 @@ if (syncConfig.disableGPU) {
   app.disableHardwareAcceleration()
 }
 
+function getDeepLinkFromArgs(argv: string[]): string | undefined {
+  return argv.find(
+    (arg) =>
+      arg.startsWith('clash://') || arg.startsWith('mihomo://') || arg.startsWith('sparkle://')
+  )
+}
+
 app.on('second-instance', async (_event, commandline) => {
   showMainWindow()
   const url = commandline.pop()
   if (url) {
-    await handleDeepLink(url)
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isLoading()) {
+      await handleDeepLink(url)
+    } else {
+      pendingDeepLink = url
+    }
   }
 })
 
 app.on('open-url', async (_event, url) => {
-  showMainWindow()
-  await handleDeepLink(url)
+  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isLoading()) {
+    await showMainWindow()
+    await handleDeepLink(url)
+  } else {
+    pendingDeepLink = url
+  }
 })
 
 let isQuitting = false,
@@ -278,6 +294,14 @@ app.whenReady().then(async () => {
   const appConfig = await getAppConfig()
   const { showFloatingWindow: showFloating = false, disableTray = false } = appConfig
   registerIpcMainHandlers()
+
+  // Check process.argv for deep link URL (cold start on Windows/Linux)
+  if (!pendingDeepLink) {
+    const deepLinkArg = getDeepLinkFromArgs(process.argv)
+    if (deepLinkArg) {
+      pendingDeepLink = deepLinkArg
+    }
+  }
 
   const createWindowPromise = createWindow(appConfig)
 
@@ -485,6 +509,16 @@ export async function createWindow(appConfig?: AppConfig): Promise<void> {
     })
     mainWindow.webContents.on('did-fail-load', () => {
       mainWindow?.webContents.reload()
+    })
+
+    mainWindow.webContents.once('did-finish-load', () => {
+      if (pendingDeepLink) {
+        const url = pendingDeepLink
+        pendingDeepLink = null
+        setTimeout(() => {
+          handleDeepLink(url)
+        }, 500)
+      }
     })
 
     mainWindow.on('close', async (event) => {
