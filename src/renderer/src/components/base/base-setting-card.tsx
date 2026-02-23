@@ -14,12 +14,15 @@ const SettingCard: React.FC<Props> = (props) => {
       <CardContent>{props.children}</CardContent>
     </Card>
   ) : (
-    <Accordion className={`${props.className} mx-2 mb-2 px-6 rounded-lg border`} type="single" collapsible {...props}>
+    <Accordion
+      className={`${props.className} mx-2 mb-2 px-6 rounded-xl border text-card-foreground shadow-sm`}
+      type="single"
+      collapsible
+      {...props}
+    >
       <AccordionItem value={props.title}>
         <AccordionTrigger>{props.title}</AccordionTrigger>
-        <AccordionContent>
-          {props.children}
-        </AccordionContent>
+        <AccordionContent>{props.children}</AccordionContent>
       </AccordionItem>
     </Accordion>
   )

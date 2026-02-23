@@ -287,23 +287,23 @@ const Home: React.FC = () => {
                     : 'from-gradient-start-power-off/50 to-gradient-end-power-off/50 border-stroke-power-off'
                 } ${loading ? 'animate-none' : ''}`}
               >
-                <div className="relative size-20">
+                <div className="relative size-16">
                   <Spinner
-                    className={`absolute inset-0 m-auto size-20 text-foreground transition-all duration-300 ease-out ${
+                    className={`absolute inset-0 m-auto size-16 text-foreground transition-all duration-300 ease-out ${
                       loading ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                     }`}
                   />
                   <img
                     src={Pause}
                     alt=""
-                    className={`absolute inset-0 w-20 h-20 fill-foreground transition-all duration-300 ease-out ${
+                    className={`absolute inset-0 size-16 fill-foreground transition-all duration-300 ease-out ${
                       !loading && isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                     }`}
                   />
                   <img
                     src={Power}
                     alt=""
-                    className={`absolute inset-0 w-20 h-20 fill-foreground transition-all duration-300 ease-out ${
+                    className={`absolute inset-0 size-16 fill-foreground transition-all duration-300 ease-out ${
                       !loading && !isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                     }`}
                   />

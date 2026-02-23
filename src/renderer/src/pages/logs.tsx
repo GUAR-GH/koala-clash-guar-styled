@@ -7,6 +7,7 @@ import { Input } from '@renderer/components/ui/input'
 import { cn } from '@renderer/lib/utils'
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso'
 import { useTranslation } from 'react-i18next'
+import dayjs from 'dayjs'
 
 import { includesIgnoreCase } from '@renderer/utils/includes'
 import { MapPin, Trash2 } from 'lucide-react'
@@ -27,7 +28,7 @@ const cachedLogs: {
 }
 
 window.electron.ipcRenderer.on('mihomoLogs', (_e, log: ControllerLog) => {
-  log.time = new Date().toLocaleString()
+  log.time = dayjs().format('L LTS')
   cachedLogs.log.push(log)
   if (cachedLogs.log.length >= 500) {
     cachedLogs.log.shift()
