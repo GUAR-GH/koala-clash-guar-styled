@@ -1,5 +1,3 @@
-import os from 'os'
-
 export const defaultConfig: AppConfig = {
   core: 'mihomo',
   silentStart: false,
@@ -24,7 +22,7 @@ export const defaultConfig: AppConfig = {
   disableSystemCA: false,
   disableNftables: false,
   safePaths: [],
-  disableGPU: process.platform === 'win32' && parseInt(os.release().split('.')[2], 10) <= 20000,
+  disableGPU: false,
   proxyDisplayLayout: 'double',
   groupDisplayLayout: 'double',
   autoLightweightMode: 'core',
