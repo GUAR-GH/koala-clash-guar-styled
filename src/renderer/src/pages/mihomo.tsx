@@ -31,6 +31,7 @@ import {
   deleteElevateTask,
   checkElevateTask,
   relaunchApp,
+  restartAsAdmin,
   notDialogQuit,
   installService,
   uninstallService,
@@ -257,6 +258,10 @@ const Mihomo: React.FC = () => {
             await restartCore()
           }}
           onGrant={async () => {
+            if (platform === 'win32') {
+              await restartAsAdmin()
+              return
+            }
             await manualGrantCorePermition()
             new Notification(t('pages.mihomo.coreAuthSuccess'))
             await restartCore()
