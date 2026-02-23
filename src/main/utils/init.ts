@@ -36,6 +36,7 @@ import { app } from 'electron'
 import { startSSIDCheck } from '../sys/ssid'
 import { startNetworkDetection } from '../core/manager'
 import { initKeyManager } from '../service/manager'
+import { migrateFromOldApp } from './migration'
 
 async function initDirs(): Promise<void> {
   if (!existsSync(dataDir())) {
@@ -192,6 +193,11 @@ function initDeeplink(): void {
 export async function init(): Promise<void> {
   await initDirs()
   await Promise.all([initConfig(), initFiles()])
+  try {
+    await migrateFromOldApp()
+  } catch {
+    // migration failure should not block app startup
+  }
   await migration()
 
   const [appConfig] = await Promise.all([
