@@ -289,7 +289,7 @@ const Home: React.FC = () => {
               >
                 <div className="relative size-16">
                   <Spinner
-                    className={`absolute inset-0 m-auto size-16 text-foreground transition-all duration-300 ease-out ${
+                    className={`absolute inset-0 m-auto size-16 text-[#FAFAFA] transition-all duration-300 ease-out ${
                       loading ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                     }`}
                   />

@@ -5,7 +5,10 @@ import { platform } from '@renderer/utils/init'
 import { isAlwaysOnTop, setAlwaysOnTop } from '@renderer/utils/ipc'
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pin, PinOff } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ChevronLeft, Pin, PinOff } from 'lucide-react'
+
+const sidebarPaths = new Set(['/home', '/profiles', '/proxies', '/connections', '/rules', '/logs', '/settings'])
 interface Props {
   title?: React.ReactNode
   header?: React.ReactNode
@@ -17,6 +20,9 @@ let saveOnTop = false
 const BasePage = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { t } = useTranslation()
   const { appConfig } = useAppConfig()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isSubPage = !sidebarPaths.has(location.pathname)
   const { useWindowFrame = false } = appConfig || {}
   const [overlayWidth, setOverlayWidth] = React.useState(0)
   const [onTop, setOnTop] = useState(saveOnTop)
@@ -47,7 +53,19 @@ const BasePage = forwardRef<HTMLDivElement, Props>((props, ref) => {
     <div ref={contentRef} className="w-full h-full">
       <div className="sticky top-0 z-40 h-[57px] w-full">
         <div className="app-drag px-2 pt-3 pb-2 flex justify-between h-[57px]">
-          <div className="title h-full text-lg leading-8">{props.title}</div>
+          <div className="title h-full text-lg leading-8 flex items-center gap-1">
+            {isSubPage && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="app-nodrag"
+                onClick={() => navigate(-1)}
+              >
+                <ChevronLeft className="size-5" />
+              </Button>
+            )}
+            {props.title}
+          </div>
           <div style={{ marginRight: overlayWidth }} className="header flex gap-1 h-full">
             {props.header}
             <Button

@@ -751,7 +751,9 @@ export default {
       noMatchingRules: '没有匹配的规则',
       saveError: '保存规则失败',
       noResolve: '跳过 DNS 解析 (no-resolve)',
-      src: '匹配来源 IP (src)'
+      src: '匹配来源 IP (src)',
+      delete: '删除规则',
+      restore: '恢复规则'
     },
     openFile: '打开文件',
     delete: '删除',

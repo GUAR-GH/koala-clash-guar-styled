@@ -696,7 +696,9 @@ export default {
       noMatchingRules: 'Нет совпадающих правил',
       saveError: 'Ошибка сохранения правил',
       noResolve: 'Не выполнять DNS-резолвинг (no-resolve)',
-      src: 'Сопоставлять с исходным IP (src)'
+      src: 'Сопоставлять с исходным IP (src)',
+      delete: 'Удалить правило',
+      restore: 'Восстановить правило'
     },
     openFile: 'Открыть файл',
     delete: 'Удалить',

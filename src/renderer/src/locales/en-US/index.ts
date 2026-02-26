@@ -695,7 +695,9 @@ export default {
       noMatchingRules: 'No matching rules',
       saveError: 'Error saving rules',
       noResolve: 'Skip DNS resolution (no-resolve)',
-      src: 'Match source IP (src)'
+      src: 'Match source IP (src)',
+      delete: 'Delete rule',
+      restore: 'Restore rule'
     },
     openFile: 'Open File',
     delete: 'Delete',

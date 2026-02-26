@@ -958,8 +958,8 @@ const RuleListItemBase: React.FC<RuleListItemProps> = ({
           </TooltipTrigger>
           <TooltipContent side="top">
             {originalIndex !== -1 && isDeleted
-              ? t('profile.editRules.restore') || 'Restore'
-              : t('profile.editRules.delete') || 'Delete'}
+              ? t('profile.editRules.restore')
+              : t('profile.editRules.delete')}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -1753,7 +1753,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
         <div className="h-full overflow-hidden">
           <div className="flex gap-4 h-full">
             {/* Left panel - Rule form */}
-            <div className="w-2/5 flex flex-col gap-3 pr-1">
+            <div className="w-2/5 flex flex-col gap-3 pr-1 overflow-y-auto min-h-0">
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1.5">
                   <Label>{t('profile.editRules.ruleType')}</Label>
@@ -1922,7 +1922,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
                   </>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     className="flex-1"
                     onClick={() => handleAddRule('prepend')}
@@ -1961,7 +1961,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
             </div>
 
             {/* Right panel - Rule list in actual order */}
-            <div className="w-3/5 border-l pl-4 flex flex-col">
+            <div className="w-3/5 border-l pl-4 pr-1 flex flex-col min-h-0">
               <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-semibold">{t('profile.editRules.currentRules')}</h3>
@@ -1977,7 +1977,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
                 </div>
                 <Input
                   placeholder={t('profile.editRules.searchPlaceholder')}
-                  className="w-48 h-8"
+                  className="max-w-42 h-8"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
