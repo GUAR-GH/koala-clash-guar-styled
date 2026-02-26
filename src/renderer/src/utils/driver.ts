@@ -1,6 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom'
 import { t } from 'i18next'
-import { toast } from 'sonner'
 
 type PopoverButton = 'next' | 'previous' | 'close'
 
@@ -50,6 +49,10 @@ type DriverStepOptions = {
   driver: Driver
 }
 
+type StartTourOptions = {
+  onMainGuideCompleted?: () => void
+}
+
 type AutoClickStepOptions = {
   element: string | (() => Element | null)
   title: string
@@ -60,13 +63,27 @@ type AutoClickStepOptions = {
   afterClick?: () => Promise<void> | void
 }
 
-type GuideMode = 'default' | 'deep-link'
+type AutoAdvanceStepOptions = {
+  element: string | (() => Element | null)
+  title: string
+  description: string
+  side?: 'top' | 'right' | 'bottom' | 'left' | 'over'
+  align?: 'start' | 'center' | 'end'
+  isCompleted: () => boolean
+  nextDelayMs?: number
+}
+
+type GuideMode = 'default' | 'deep-link' | 'admin-required'
 
 let driverInstance: Driver | null = null
 let cssLoaded = false
 let guideMode: GuideMode = 'default'
 let stopGuideModeObserver: (() => void) | null = null
 let isSwitchingGuideMode = false
+let onMainGuideCompleted: (() => void) | null = null
+let isMainGuideCompleted = false
+let F11Count = 0
+let removeTourExitHotkeyListener: (() => void) | null = null
 
 const GUIDE_SELECTORS = {
   addProfileButton: '[data-guide="home-add-profile-btn"]',
@@ -74,6 +91,7 @@ const GUIDE_SELECTORS = {
   profileImportPasteButton: '[data-guide="profile-import-paste-btn"]',
   profileImportButton: '[data-guide="profile-import-submit"]',
   profileInstallConfirmModal: '.guide-profile-install-modal',
+  adminRequiredModal: '.guide-admin-required-modal',
   profileHeader: '[data-guide="home-profile-header"]',
   profileAnnounce: '[data-guide="home-profile-announce"]',
   powerButton: '[data-guide="home-power-toggle"]',
@@ -92,6 +110,39 @@ const FIRST_PROXY_GROUP_OVERLAY_ID = 'guide-first-group-overlay'
 function clearGuideModeObserver(): void {
   stopGuideModeObserver?.()
   stopGuideModeObserver = null
+}
+
+function clearTourExitHotkeyListener(): void {
+  F11Count = 0
+  removeTourExitHotkeyListener?.()
+  removeTourExitHotkeyListener = null
+}
+
+function ensureTourExitHotkeyListener(): void {
+  if (removeTourExitHotkeyListener) return
+
+  const handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== 'F11') return
+
+    event.preventDefault()
+    F11Count++
+    if (F11Count < 5) return
+
+    F11Count = 0
+    driverInstance?.destroy()
+  }
+
+  window.addEventListener('keydown', handleKeyDown)
+  removeTourExitHotkeyListener = (): void => {
+    window.removeEventListener('keydown', handleKeyDown)
+  }
+}
+
+function markMainGuideCompleted(): void {
+  if (isMainGuideCompleted) return
+
+  isMainGuideCompleted = true
+  onMainGuideCompleted?.()
 }
 
 async function loadDriverModule(): Promise<{ driver: DriverFactory }> {
@@ -262,9 +313,120 @@ function createAutoClickStep({
   }
 }
 
+function startAutoAdvanceWatcher(isCompleted: () => boolean, onCompleted: () => void): () => void {
+  let isStopped = false
+
+  const runCheck = (): void => {
+    if (isStopped || !isCompleted()) return
+
+    try {
+      onCompleted()
+    } finally {
+      stop()
+    }
+  }
+
+  const scheduleCheck = (): void => {
+    window.setTimeout(runCheck, 0)
+  }
+
+  const triggerEvents: (keyof DocumentEventMap)[] = [
+    'click',
+    'input',
+    'change',
+    'keyup',
+    'paste',
+    'submit'
+  ]
+
+  const stop = (): void => {
+    if (isStopped) return
+
+    isStopped = true
+    window.clearInterval(intervalId)
+    triggerEvents.forEach((eventName) => {
+      document.removeEventListener(eventName, scheduleCheck, true)
+    })
+  }
+
+  triggerEvents.forEach((eventName) => {
+    document.addEventListener(eventName, scheduleCheck, true)
+  })
+
+  const intervalId = window.setInterval(runCheck, WAIT_INTERVAL_MS)
+
+  runCheck()
+
+  return stop
+}
+
+function createAutoAdvanceStep({
+  element,
+  title,
+  description,
+  side = 'bottom',
+  align = 'center',
+  isCompleted,
+  nextDelayMs = 0
+}: AutoAdvanceStepOptions): DriveStep {
+  let stopWatcher: (() => void) | null = null
+  let pendingMoveNextTimeout: number | null = null
+
+  const clearPendingMoveNext = (): void => {
+    if (pendingMoveNextTimeout === null) return
+    window.clearTimeout(pendingMoveNextTimeout)
+    pendingMoveNextTimeout = null
+  }
+
+  return {
+    element,
+    popover: {
+      title,
+      description,
+      side,
+      align,
+      showButtons: ['previous']
+    },
+    onHighlighted: (_highlightedElement, _step, options): void => {
+      stopWatcher?.()
+      clearPendingMoveNext()
+      stopWatcher = startAutoAdvanceWatcher(isCompleted, () => {
+        if (nextDelayMs > 0) {
+          pendingMoveNextTimeout = window.setTimeout(() => {
+            pendingMoveNextTimeout = null
+            options.driver.moveNext()
+          }, nextDelayMs)
+          return
+        }
+        options.driver.moveNext()
+      })
+    },
+    onDeselected: (): void => {
+      stopWatcher?.()
+      stopWatcher = null
+      clearPendingMoveNext()
+    }
+  }
+}
+
 function buildGuideSteps(mode: GuideMode = 'default'): DriveStep[] {
   const hasNoProfilesState = Boolean(resolveElement(GUIDE_SELECTORS.addProfileButton))
   const steps: DriveStep[] = []
+
+  if (mode === 'admin-required') {
+    steps.push(
+      createAutoAdvanceStep({
+        element: () =>
+          resolveElement(GUIDE_SELECTORS.adminRequiredModal) ??
+          resolveElement(GUIDE_SELECTORS.powerButton) ??
+          resolveElement(GUIDE_SELECTORS.addProfileButton),
+        title: t('guide.adminRequiredTitle'),
+        description: t('guide.adminRequiredDesc'),
+        side: 'top',
+        isCompleted: () => !resolveElement(GUIDE_SELECTORS.adminRequiredModal)
+      })
+    )
+  }
 
   if (mode === 'default') {
     steps.push({
@@ -272,110 +434,74 @@ function buildGuideSteps(mode: GuideMode = 'default'): DriveStep[] {
         title: t('guide.welcome'),
         description: t('guide.welcomeDesc'),
         side: 'over',
-        align: 'center'
+        align: 'center',
+        showButtons: ['next']
       }
     })
   }
 
   if (mode === 'deep-link') {
-    steps.push({
-      element: () =>
-        resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
-        resolveElement(GUIDE_SELECTORS.profileHeader) ??
-        resolveElement(GUIDE_SELECTORS.powerButton),
-      popover: {
+    steps.push(
+      createAutoAdvanceStep({
+        element: () =>
+          resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+          resolveElement(GUIDE_SELECTORS.profileHeader) ??
+          resolveElement(GUIDE_SELECTORS.powerButton),
         title: t('guide.deepLinkImportTitle'),
         description: t('guide.deepLinkImportDesc'),
         side: 'top',
-        onNextClick: (_element, _step, options): void => {
-          if (!resolveElement(GUIDE_SELECTORS.profileHeader)) {
-            toast.error(t('guide.deepLinkConfirmRequired'))
-            return
-          }
-          options.driver.moveNext()
-        }
-      }
-    })
+        isCompleted: () => Boolean(resolveElement(GUIDE_SELECTORS.profileHeader))
+      })
+    )
   } else if (hasNoProfilesState) {
     steps.push(
-      {
+      createAutoAdvanceStep({
         element: () =>
           resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
           resolveElement(GUIDE_SELECTORS.addProfileButton),
-        popover: {
-          title: t('guide.addProfileTitle'),
-          description: t('guide.addProfileDesc'),
-          side: 'top',
-          onNextClick: (_element, _step, options): void => {
-            const hasImportFlow = Boolean(
-              resolveElement(GUIDE_SELECTORS.profileImportUrlInput) ??
-              resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
-              resolveElement(GUIDE_SELECTORS.profileHeader)
-            )
-            if (!hasImportFlow) {
-              toast.error(t('guide.openImportFlowRequired'))
-              return
-            }
-
-            options.driver.moveNext()
-          }
-        }
-      },
-      {
+        title: t('guide.addProfileTitle'),
+        description: t('guide.addProfileDesc'),
+        side: 'top',
+        isCompleted: () =>
+          Boolean(
+            resolveElement(GUIDE_SELECTORS.profileImportUrlInput) ??
+            resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
+            resolveElement(GUIDE_SELECTORS.profileHeader)
+          )
+      }),
+      createAutoAdvanceStep({
         element: () =>
           resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
           resolveElement(GUIDE_SELECTORS.profileImportPasteButton) ??
           resolveElement(GUIDE_SELECTORS.profileHeader) ??
           resolveElement(GUIDE_SELECTORS.powerButton),
-        popover: {
-          title: t('guide.insertLinkTitle'),
-          description: t('guide.insertLinkDesc'),
-          side: 'left',
-          align: 'center',
-          onNextClick: (_element, _step, options): void => {
-            const profileHeader = resolveElement(GUIDE_SELECTORS.profileHeader)
-            const urlInput = resolveElement(
-              GUIDE_SELECTORS.profileImportUrlInput
-            ) as HTMLInputElement | null
+        title: t('guide.insertLinkTitle'),
+        description: t('guide.insertLinkDesc'),
+        side: 'left',
+        align: 'center',
+        isCompleted: () => {
+          const profileHeader = resolveElement(GUIDE_SELECTORS.profileHeader)
+          const urlInput = resolveElement(
+            GUIDE_SELECTORS.profileImportUrlInput
+          ) as HTMLInputElement | null
 
-            if (profileHeader && !urlInput) {
-              options.driver.moveNext()
-              return
-            }
+          if (profileHeader && !urlInput) return true
+          if (resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) return true
 
-            if (resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) {
-              options.driver.moveNext()
-              return
-            }
-
-            if (!urlInput || !isValidHttpUrl(urlInput.value.trim())) {
-              toast.error(t('guide.validLinkRequired'))
-              return
-            }
-
-            options.driver.moveNext()
-          }
+          return Boolean(urlInput && isValidHttpUrl(urlInput.value.trim()))
         }
-      },
-      {
+      }),
+      createAutoAdvanceStep({
         element: () =>
           resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal) ??
           resolveElement(GUIDE_SELECTORS.profileImportButton) ??
           resolveElement(GUIDE_SELECTORS.profileHeader) ??
           resolveElement(GUIDE_SELECTORS.powerButton),
-        popover: {
-          title: t('guide.importProfileTitle'),
-          description: t('guide.importProfileDesc'),
-          side: 'top',
-          onNextClick: (_element, _step, options): void => {
-            if (!resolveElement(GUIDE_SELECTORS.profileHeader)) {
-              toast.error(t('guide.completeImportRequired'))
-              return
-            }
-            options.driver.moveNext()
-          }
-        }
-      }
+        title: t('guide.importProfileTitle'),
+        description: t('guide.importProfileDesc'),
+        side: 'top',
+        isCompleted: () => Boolean(resolveElement(GUIDE_SELECTORS.profileHeader))
+      })
     )
   }
 
@@ -416,28 +542,18 @@ function buildGuideSteps(mode: GuideMode = 'default'): DriveStep[] {
       side: 'top',
       waitFor: GUIDE_SELECTORS.firstProxyGroup
     }),
-    {
+    createAutoAdvanceStep({
       element: GUIDE_SELECTORS.firstProxyGroup,
-      popover: {
-        title: t('guide.firstGroupTitle'),
-        description: t('guide.firstGroupDesc'),
-        side: 'bottom',
-        align: 'start',
-        onNextClick: (_element, _step, options): void => {
-          const firstGroup = resolveElement(GUIDE_SELECTORS.firstProxyGroup)
-          const isGroupOpened = firstGroup?.getAttribute('data-guide-open') === 'true'
-
-          if (!isGroupOpened) {
-            toast.error(t('guide.openGroupRequired'))
-            return
-          }
-
-          window.setTimeout(() => {
-            options.driver.moveNext()
-          }, 140)
-        }
-      }
-    },
+      title: t('guide.firstGroupTitle'),
+      description: t('guide.firstGroupDesc'),
+      side: 'bottom',
+      align: 'start',
+      isCompleted: () => {
+        const firstGroup = resolveElement(GUIDE_SELECTORS.firstProxyGroup)
+        return firstGroup?.getAttribute('data-guide-open') === 'true'
+      },
+      nextDelayMs: 140
+    }),
     {
       element: () =>
         getFirstProxyGroupHighlightElement() ?? resolveElement(GUIDE_SELECTORS.firstProxyGroup),
@@ -486,7 +602,11 @@ function buildGuideSteps(mode: GuideMode = 'default'): DriveStep[] {
         title: t('guide.tutorialEnd'),
         description: t('guide.tutorialEndDesc'),
         side: 'over',
-        align: 'center'
+        align: 'center',
+        onNextClick: (_element, _step, options): void => {
+          markMainGuideCompleted()
+          options.driver.destroy()
+        }
       }
     }
   )
@@ -516,13 +636,13 @@ async function createDriverWithMode(mode: GuideMode): Promise<Driver> {
     onDestroyed: (): void => {
       removeFirstProxyGroupOverlay()
       clearGuideModeObserver()
+      clearTourExitHotkeyListener()
       guideMode = 'default'
       driverInstance = null
     }
   })
-  if (mode === 'default') {
-    startGuideModeObserverLoop(driverInstance)
-  }
+  ensureTourExitHotkeyListener()
+  startGuideModeObserverLoop(driverInstance)
 
   return driverInstance
 }
@@ -539,25 +659,33 @@ async function restartGuideInMode(mode: GuideMode): Promise<void> {
   }
 }
 
-function switchToDeepLinkGuide(driver: Driver): void {
-  if (guideMode === 'deep-link' || isSwitchingGuideMode) return
+function switchGuideModeIfNeeded(driver: Driver): void {
+  if (isSwitchingGuideMode) return
   if (driver !== driverInstance) return
-  if (!resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) return
 
-  void restartGuideInMode('deep-link')
+  if (resolveElement(GUIDE_SELECTORS.adminRequiredModal)) {
+    if (guideMode !== 'admin-required') {
+      void restartGuideInMode('admin-required')
+    }
+    return
+  }
+
+  if (guideMode === 'default' && resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) {
+    void restartGuideInMode('deep-link')
+  }
 }
 
 function startGuideModeObserverLoop(driver: Driver): void {
   clearGuideModeObserver()
 
-  if (guideMode !== 'default') return
   if (typeof MutationObserver === 'undefined') return
   if (!document.body) return
 
   const observer = new MutationObserver(() => {
-    switchToDeepLinkGuide(driver)
+    switchGuideModeIfNeeded(driver)
   })
   observer.observe(document.body, { childList: true, subtree: true })
+  switchGuideModeIfNeeded(driver)
   stopGuideModeObserver = (): void => {
     observer.disconnect()
   }
@@ -567,7 +695,13 @@ export async function createDriver(_navigate: NavigateFunction): Promise<Driver>
   return createDriverWithMode('default')
 }
 
-export async function startTour(navigate: NavigateFunction): Promise<void> {
+export async function startTour(
+  navigate: NavigateFunction,
+  options: StartTourOptions = {}
+): Promise<void> {
+  onMainGuideCompleted = options.onMainGuideCompleted ?? null
+  isMainGuideCompleted = false
+
   navigate('/home')
   await sleep(120)
 
@@ -576,7 +710,8 @@ export async function startTour(navigate: NavigateFunction): Promise<void> {
       [
         GUIDE_SELECTORS.addProfileButton,
         GUIDE_SELECTORS.powerButton,
-        GUIDE_SELECTORS.profileInstallConfirmModal
+        GUIDE_SELECTORS.profileInstallConfirmModal,
+        GUIDE_SELECTORS.adminRequiredModal
       ],
       15_000
     )
@@ -587,7 +722,9 @@ export async function startTour(navigate: NavigateFunction): Promise<void> {
   const d = await createDriver(navigate)
   d.drive()
 
-  if (resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) {
+  if (resolveElement(GUIDE_SELECTORS.adminRequiredModal)) {
+    await restartGuideInMode('admin-required')
+  } else if (resolveElement(GUIDE_SELECTORS.profileInstallConfirmModal)) {
     await restartGuideInMode('deep-link')
   }
 }

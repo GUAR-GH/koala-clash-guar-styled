@@ -884,15 +884,18 @@ export default {
       'Open Add Profile or the deep-link import confirmation dialog before continuing.',
     insertLinkTitle: 'Paste From Clipboard',
     insertLinkDesc:
-      'Manual import: click the paste button to fill your subscription link, then click "Next". Deep-link import: if a confirmation dialog is open, click "Next" to continue.',
+      'Manual import: click the paste button and fill your subscription link. As soon as the link is valid, the guide will continue automatically. Deep-link import: if a confirmation dialog is open, this step also continues automatically.',
     validLinkRequired: 'Please enter a valid http/https link to continue.',
     importProfileTitle: 'Import Subscription',
     importProfileDesc:
-      'Manual import: click "Import". Deep-link import: confirm the import in the dialog, then click "Next".',
+      'Manual import: click "Import". Deep-link import: confirm the import in the dialog. Once import is completed, the guide moves to the next step automatically.',
     completeImportRequired: 'Complete profile import before continuing.',
     deepLinkImportTitle: 'Import Via Deep Link',
     deepLinkImportDesc:
-      'A deep-link import dialog is open. Click "Import" in that dialog, then click "Next" here.',
+      'A deep-link import dialog is open. Confirm import in that dialog and this guide step will continue automatically.',
+    adminRequiredTitle: 'Administrator Rights Required',
+    adminRequiredDesc:
+      'For first launch, confirm restart as administrator in this dialog. Once this modal is closed, the guide continues automatically.',
     deepLinkConfirmRequired: 'Confirm the deep-link import in the dialog before continuing.',
     profileHeaderTitle: 'Subscription Header',
     profileHeaderDesc: 'This area shows the logo and name of your VPN profile.',

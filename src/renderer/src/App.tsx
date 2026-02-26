@@ -6,7 +6,14 @@ import './i18n'
 import { useTranslation } from 'react-i18next'
 import routes from '@renderer/routes'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
-import { applyTheme, checkUpdate, needsFirstRunAdmin, restartAsAdmin, setNativeTheme, setTitleBarOverlay } from '@renderer/utils/ipc'
+import {
+  applyTheme,
+  checkUpdate,
+  needsFirstRunAdmin,
+  restartAsAdmin,
+  setNativeTheme,
+  setTitleBarOverlay
+} from '@renderer/utils/ipc'
 import { platform } from '@renderer/utils/init'
 import { TitleBarOverlayOptions } from 'electron'
 import useSWR from 'swr'
@@ -57,9 +64,12 @@ const App: React.FC = () => {
   useEffect(() => {
     const tourShown = window.localStorage.getItem('tourShown')
     if (!tourShown) {
-      window.localStorage.setItem('tourShown', 'true')
       import('@renderer/utils/driver').then(({ startTour }) => {
-        startTour(navigate)
+        startTour(navigate, {
+          onMainGuideCompleted: (): void => {
+            window.localStorage.setItem('tourShown', 'true')
+          }
+        })
       })
     }
   }, [])
@@ -220,6 +230,7 @@ const App: React.FC = () => {
           onConfirm={async () => {
             await restartAsAdmin()
           }}
+          className="guide-admin-required-modal"
         />
       )}
       <HwidLimitAlert />
