@@ -92,7 +92,7 @@ const ConfirmModal: React.FC<Props> = (props) => {
 
   return (
     <Dialog open={true} onOpenChange={onChange}>
-      <DialogContent className={cn('w-[min(420px,calc(100%-2rem))]', className)}>
+      <DialogContent className={cn('w-[min(500px,calc(100%-2rem))]', className)}>
         <DialogClose ref={closeRef} className="hidden" />
         <DialogHeader>
           <DialogTitle>{modalTitle}</DialogTitle>

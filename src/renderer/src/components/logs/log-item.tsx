@@ -13,7 +13,7 @@ const LogItem: React.FC<ControllerLog & { index: number }> = (props) => {
     <div className={`px-2 pb-2 ${index === 0 ? 'pt-2' : ''}`}>
       <Card className="gap-0 py-0">
         <CardHeader className="pb-0 pt-1 px-3 gap-1">
-          <div className={`mr-2 text-lg font-bold ${colorMap[type]}`}>
+          <div className={`mr-2 text-lg flag-emoji font-bold ${colorMap[type]}`}>
             {props.type.toUpperCase()}
           </div>
           <small className="text-muted-foreground">{time}</small>
