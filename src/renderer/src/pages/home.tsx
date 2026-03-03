@@ -218,12 +218,9 @@ const Home: React.FC = () => {
                 data-guide="home-profile-header"
                 className="flex items-center justify-center gap-3 mb-2"
               >
-                {(currentProfile.logo || currentProfile.home) && (
+                {currentProfile.logo && (
                   <img
-                    src={
-                      currentProfile.logo ||
-                      `https://www.google.com/s2/favicons?domain=${new URL(currentProfile.home!).hostname}&sz=32`
-                    }
+                    src={currentProfile.logo}
                     alt=""
                     className="w-10 h-10 rounded-full"
                     onError={(e) => {
