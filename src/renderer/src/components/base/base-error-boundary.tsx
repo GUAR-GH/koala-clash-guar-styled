@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 const ErrorFallback = ({ error }: FallbackProps): JSX.Element => {
   const { t } = useTranslation()
+  const err = error instanceof Error ? error : new Error(String(error))
   return (
     <div className="p-4">
       <h2 className="my-2 text-lg font-bold">
@@ -16,17 +17,17 @@ const ErrorFallback = ({ error }: FallbackProps): JSX.Element => {
         variant="secondary"
         className="ml-2"
         onClick={() =>
-          navigator.clipboard.writeText('```\n' + error.message + '\n' + error.stack + '\n```')
+          navigator.clipboard.writeText('```\n' + err.message + '\n' + err.stack + '\n```')
         }
       >
         {t('errorBoundary.copyErrorInfo')}
       </Button>
 
-      <p className="my-2">{error.message}</p>
+      <p className="my-2">{err.message}</p>
 
       <details title="Error Stack">
         <summary>Error Stack</summary>
-        <pre>{error.stack}</pre>
+        <pre>{err.stack}</pre>
       </details>
     </div>
   )
