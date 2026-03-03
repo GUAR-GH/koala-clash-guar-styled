@@ -24,7 +24,7 @@ options=('!lto')
 
 prepare(){
     cd $srcdir/${_pkgname}-${pkgver}
-    sed -i "s/productName: Koala-Clash/productName: koala-clash/" electron-builder.yml
+    sed -i "s/productName: Koala Clash/productName: koala-clash/" electron-builder.yml
     pnpm install
 }
 

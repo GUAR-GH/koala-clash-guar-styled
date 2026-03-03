@@ -21,7 +21,7 @@ options=('!lto')
 
 prepare(){
     cd $srcdir/${pkgname}-${pkgver}
-    sed -i "s/productName: Koala-Clash/productName: koala-clash/" electron-builder.yml
+    sed -i "s/productName: Koala Clash/productName: koala-clash/" electron-builder.yml
     pnpm install
 }
 
@@ -32,7 +32,7 @@ build(){
 
 package() {
 	cd $srcdir/${pkgname}-${pkgver}/dist
-    bsdtar -xf koala-clash-linux-${pkgver}*.deb
+    bsdtar -xf koala-clash_*.deb
     bsdtar -xf data.tar.xz -C "${pkgdir}/"
     chmod +x ${pkgdir}/opt/koala-clash/koala-clash
     chmod +x ${pkgdir}/opt/koala-clash/resources/files/koala-clash-service
