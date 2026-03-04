@@ -4,7 +4,7 @@ import windowStateKeeper from 'electron-window-state'
 import { join } from 'path'
 import { getAppConfig, patchAppConfig } from '../config'
 import { applyTheme } from './theme'
-import { buildContextMenu, showTrayIcon } from './tray'
+import { buildContextMenu } from './tray'
 
 export let floatingWindow: BrowserWindow | null = null
 let triggerTimeoutRef: NodeJS.Timeout | null = null
@@ -112,8 +112,6 @@ export async function closeFloatingWindow(): Promise<void> {
     floatingWindow.destroy()
     floatingWindow = null
   }
-  await showTrayIcon()
-  await patchAppConfig({ disableTray: false })
 }
 
 export async function showContextMenu(): Promise<void> {

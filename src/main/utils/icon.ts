@@ -3,7 +3,7 @@ import { getControledMihomoConfig } from '../config'
 import fs, { existsSync } from 'fs'
 import path from 'path'
 import { getIcon } from 'file-icon-info'
-import { windowsDefaultIcon, darwinDefaultIcon, otherDevicesIcon } from './defaultIcon'
+import { darwinDefaultIcon, otherDevicesIcon, windowsDefaultIcon } from './defaultIcon'
 import { app } from 'electron'
 import os from 'os'
 import crypto from 'crypto'
@@ -274,6 +274,5 @@ export async function getImageDataURL(url: string): Promise<string> {
     })
   })
   const mimeType = res.headers['content-type']
-  const dataURL = `data:${mimeType};base64,${Buffer.from(res.data).toString('base64')}`
-  return dataURL
+  return `data:${mimeType};base64,${Buffer.from(res.data).toString('base64')}`
 }

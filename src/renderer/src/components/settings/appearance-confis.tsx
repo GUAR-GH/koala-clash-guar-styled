@@ -127,31 +127,29 @@ const AppearanceConfig: React.FC<AppearanceConfigProps> = (props) => {
           />
         </SettingItem>
         {localShowFloating && (
-          <>
-            <SettingItem title={t('settings.appearance.rotateFloatingIcon')} divider>
-              <Switch
-                checked={spinFloatingIcon}
-                onCheckedChange={async (value) => {
-                  await patchAppConfig({ spinFloatingIcon: value })
-                  window.electron.ipcRenderer.send('updateFloatingWindow')
-                }}
-              />
-            </SettingItem>
-            <SettingItem title={t('settings.appearance.disableTrayIcon')} divider>
-              <Switch
-                checked={disableTray}
-                onCheckedChange={async (value) => {
-                  await patchAppConfig({ disableTray: value })
-                  if (value) {
-                    closeTrayIcon()
-                  } else {
-                    showTrayIcon()
-                  }
-                }}
-              />
-            </SettingItem>
-          </>
+          <SettingItem title={t('settings.appearance.rotateFloatingIcon')} divider>
+            <Switch
+              checked={spinFloatingIcon}
+              onCheckedChange={async (value) => {
+                await patchAppConfig({ spinFloatingIcon: value })
+                window.electron.ipcRenderer.send('updateFloatingWindow')
+              }}
+            />
+          </SettingItem>
         )}
+        <SettingItem title={t('settings.appearance.disableTrayIcon')} divider>
+          <Switch
+            checked={disableTray}
+            onCheckedChange={async (value) => {
+              await patchAppConfig({ disableTray: value })
+              if (value) {
+                closeTrayIcon()
+              } else {
+                showTrayIcon()
+              }
+            }}
+          />
+        </SettingItem>
         {platform !== 'linux' && (
           <>
             <SettingItem title={t('settings.appearance.trayShowNodeInfo')} divider>
