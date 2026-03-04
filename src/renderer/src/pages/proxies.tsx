@@ -252,12 +252,12 @@ const Proxies: React.FC = () => {
 
       return (
         <div
-          className={`w-full ${index > 0 ? 'pt-2' : ''} ${index === groupCounts.length - 1 && !isOpen[index] ? 'pb-2' : ''} px-2`}
+          className={`w-full ${!isOpen[index] ? 'pb-2' : ''} px-2`}
         >
           <Card
             data-guide={index === 0 ? 'proxies-first-group' : undefined}
             data-guide-open={index === 0 ? `${isOpen[index]}` : undefined}
-            className="w-full cursor-pointer py-0 transition-all duration-200 hover:bg-accent/50 hover:shadow-sm"
+            className="w-full backdrop-blur-3xl cursor-pointer py-0 transition-all duration-200 hover:bg-accent/50 hover:shadow-sm"
             role="button"
             tabIndex={0}
             onClick={() => toggleOpen(index)}
@@ -371,7 +371,7 @@ const Proxies: React.FC = () => {
               ? { gridTemplateColumns: `repeat(${proxyCols}, minmax(0, 1fr))` }
               : {}
           }
-          className={`grid ${proxyCols === 'auto' ? 'sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : ''} ${groupIndex === groupCounts.length - 1 && innerIndex === groupCounts[groupIndex] - 1 ? 'pb-2' : ''} gap-2 pt-2 mx-2`}
+          className={`grid ${proxyCols === 'auto' ? 'sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : ''} ${innerIndex === groupCounts[groupIndex] - 1 ? 'pb-2' : ''} gap-2 pt-2 mx-2`}
         >
           {Array.from({ length: cols }).map((_, i) => {
             if (!allProxies[groupIndex][innerIndex * cols + i]) return null
