@@ -26,10 +26,6 @@ init().then(() => {
       e.preventDefault()
       quitApp()
     }
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      window.close()
-    }
     if (e.key === 'F12') {
       e.preventDefault()
       F12Count++
