@@ -32,7 +32,7 @@ import {
 } from 'electron'
 import { triggerSysProxy } from '../sys/sysproxy'
 import { quitWithoutCore, restartCore } from '../core/manager'
-import { floatingWindow, triggerFloatingWindow } from './floatingWindow'
+import { floatingWindow } from './floatingWindow'
 import { is } from '@electron-toolkit/utils'
 import { join } from 'path'
 import { applyTheme } from './theme'
@@ -138,9 +138,9 @@ export const buildContextMenu = async (): Promise<Menu> => {
     onlyActiveDevice = false,
     autoCloseConnection,
     proxyInTray = true,
+    mainSwitchMode = 'tun',
     // useCustomTrayMenu = false,
     triggerSysProxyShortcut = '',
-    showFloatingWindowShortcut = '',
     showWindowShortcut = '',
     triggerTunShortcut = '',
     ruleModeShortcut = '',
@@ -219,62 +219,32 @@ export const buildContextMenu = async (): Promise<Menu> => {
         showMainWindow()
       }
     },
-    {
-      id: 'show-floating',
-      accelerator: showFloatingWindowShortcut,
-      label: floatingWindow?.isVisible() ? t('tray.hideFloatingWindow') : t('tray.showFloatingWindow'),
-      type: 'normal',
-      click: async (): Promise<void> => {
-        await triggerFloatingWindow()
-      }
-    },
-    // { type: 'separator' },
-    // {
-    //   type: 'checkbox',
-    //   label: '自定义托盘菜单',
-    //   checked: useCustomTrayMenu,
-    //   click: async (item): Promise<void> => {
-    //     await patchAppConfig({ useCustomTrayMenu: item.checked })
-    //     ipcMain.emit('updateTrayMenu')
-    //   }
-    // },
     { type: 'separator' },
     {
-      type: 'checkbox',
-      label: t('tray.systemProxy'),
-      accelerator: triggerSysProxyShortcut,
-      checked: sysProxy.enable,
-      click: async (item): Promise<void> => {
-        const enable = item.checked
+      type: 'normal',
+      label: (mainSwitchMode === 'tun' ? (tun?.enable ?? false) : sysProxy.enable)
+        ? t('tray.disable')
+        : t('tray.enable'),
+      accelerator: mainSwitchMode === 'tun' ? triggerTunShortcut : triggerSysProxyShortcut,
+      click: async (): Promise<void> => {
+        const currentEnabled = mainSwitchMode === 'tun' ? (tun?.enable ?? false) : sysProxy.enable
+        const enable = !currentEnabled
         try {
-          await triggerSysProxy(enable, onlyActiveDevice)
-          await patchAppConfig({ sysProxy: { enable } })
-          mainWindow?.webContents.send('appConfigUpdated')
-          floatingWindow?.webContents.send('appConfigUpdated')
-          await updateTrayIcon()
-        } catch (e) {
-          // ignore
-        } finally {
-          ipcMain.emit('updateTrayMenu')
-        }
-      }
-    },
-    {
-      type: 'checkbox',
-      label: t('tray.virtualNetwork'),
-      accelerator: triggerTunShortcut,
-      checked: tun?.enable ?? false,
-      click: async (item): Promise<void> => {
-        const enable = item.checked
-        try {
-          if (enable) {
-            await patchControledMihomoConfig({ tun: { enable }, dns: { enable: true } })
+          if (mainSwitchMode === 'tun') {
+            if (enable) {
+              await patchControledMihomoConfig({ tun: { enable }, dns: { enable: true } })
+            } else {
+              await patchControledMihomoConfig({ tun: { enable } })
+            }
+            mainWindow?.webContents.send('controledMihomoConfigUpdated')
+            floatingWindow?.webContents.send('controledMihomoConfigUpdated')
+            await restartCore()
           } else {
-            await patchControledMihomoConfig({ tun: { enable } })
+            await triggerSysProxy(enable, onlyActiveDevice)
+            await patchAppConfig({ sysProxy: { enable } })
+            mainWindow?.webContents.send('appConfigUpdated')
+            floatingWindow?.webContents.send('appConfigUpdated')
           }
-          mainWindow?.webContents.send('controledMihomoConfigUpdated')
-          floatingWindow?.webContents.send('controledMihomoConfigUpdated')
-          await restartCore()
           await updateTrayIcon()
         } catch {
           // ignore

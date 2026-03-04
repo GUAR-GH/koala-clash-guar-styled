@@ -15,15 +15,15 @@ export async function createApplicationMenu(): Promise<void> {
 
   const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: app.getName(),
+      label: 'Koala Clash',
       submenu: [
         {
-          label: t('menu.about') + ' ' + app.getName(),
+          label: t('menu.about') + ' ' + 'Koala Clash',
           role: 'about'
         },
         { type: 'separator' },
         {
-          label: t('menu.hide') + app.getName(),
+          label: t('menu.hide') + ' ' + 'Koala Clash',
           accelerator: 'Command+H',
           role: 'hide'
         },
