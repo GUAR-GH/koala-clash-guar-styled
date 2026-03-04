@@ -11,6 +11,7 @@ import { triggerSysProxy } from '../sys/sysproxy'
 import { patchMihomoConfig } from '../core/mihomoApi'
 import { quitWithoutCore, restartCore } from '../core/manager'
 import { floatingWindow, triggerFloatingWindow } from './floatingWindow'
+import { updateTrayIcon } from './tray'
 
 export async function registerShortcut(
   oldShortcut: string,
@@ -48,6 +49,7 @@ export async function registerShortcut(
           }).show()
           mainWindow?.webContents.send('appConfigUpdated')
           floatingWindow?.webContents.send('appConfigUpdated')
+          await updateTrayIcon()
         } catch {
           // ignore
         } finally {
@@ -71,6 +73,7 @@ export async function registerShortcut(
           }).show()
           mainWindow?.webContents.send('controledMihomoConfigUpdated')
           floatingWindow?.webContents.send('appConfigUpdated')
+          await updateTrayIcon()
         } catch {
           // ignore
         } finally {

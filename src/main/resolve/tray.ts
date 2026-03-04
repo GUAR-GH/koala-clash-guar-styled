@@ -7,8 +7,11 @@ import {
   patchControledMihomoConfig
 } from '../config'
 import icoIcon from '../../../resources/icon.ico?asset'
+import icoIconOff from '../../../resources/icon_off.ico?asset'
 import pngIcon from '../../../resources/icon.png?asset'
-import templateIcon from '../../../resources/iconTemplate.png?asset'
+import pngIconOff from '../../../resources/icon_off.png?asset'
+import templateIconOff from '../../../resources/iconTemplate.png?asset'
+import templateIcon from '../../../resources/iconTemplate123.png?asset'
 import {
   mihomoChangeProxy,
   mihomoCloseAllConnections,
@@ -248,6 +251,7 @@ export const buildContextMenu = async (): Promise<Menu> => {
           await patchAppConfig({ sysProxy: { enable } })
           mainWindow?.webContents.send('appConfigUpdated')
           floatingWindow?.webContents.send('appConfigUpdated')
+          await updateTrayIcon()
         } catch (e) {
           // ignore
         } finally {
@@ -271,6 +275,7 @@ export const buildContextMenu = async (): Promise<Menu> => {
           mainWindow?.webContents.send('controledMihomoConfigUpdated')
           floatingWindow?.webContents.send('controledMihomoConfigUpdated')
           await restartCore()
+          await updateTrayIcon()
         } catch {
           // ignore
         } finally {
@@ -385,6 +390,7 @@ export async function createTray(): Promise<void> {
   }
   tray?.setToolTip('Koala Clash')
   tray?.setIgnoreDoubleClickEvents(true)
+  await updateTrayIcon()
   if (process.platform === 'darwin') {
     if (!useDockIcon && app.dock) {
       app.dock.hide()
@@ -478,6 +484,28 @@ export async function closeTrayIcon(): Promise<void> {
     customTrayWindow.destroy()
   }
   customTrayWindow = null
+}
+
+export async function updateTrayIcon(): Promise<void> {
+  if (!tray) return
+  const { sysProxy } = await getAppConfig()
+  const { tun } = await getControledMihomoConfig()
+  const proxyEnabled = sysProxy.enable || (tun?.enable ?? false)
+
+  try {
+    if (process.platform === 'darwin') {
+      const iconPath = proxyEnabled ? templateIcon : templateIconOff
+      const icon = nativeImage.createFromPath(iconPath).resize({ height: 16 })
+      icon.setTemplateImage(true)
+      tray.setImage(icon)
+    } else if (process.platform === 'win32') {
+      tray.setImage(proxyEnabled ? icoIcon : icoIconOff)
+    } else {
+      tray.setImage(proxyEnabled ? pngIcon : pngIconOff)
+    }
+  } catch {
+    // ignore
+  }
 }
 
 export function setDockVisible(visible: boolean): void {

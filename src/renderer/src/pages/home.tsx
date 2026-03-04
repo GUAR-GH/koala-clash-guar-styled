@@ -4,7 +4,7 @@ import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import { useGroups } from '@renderer/hooks/use-groups'
-import { restartCore, triggerSysProxy } from '@renderer/utils/ipc'
+import { restartCore, triggerSysProxy, updateTrayIcon } from '@renderer/utils/ipc'
 import NumberFlow from '@number-flow/react'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
@@ -167,6 +167,7 @@ const Home: React.FC = () => {
         window.electron.ipcRenderer.send('updateFloatingWindow')
         window.electron.ipcRenderer.send('updateTrayMenu')
       }
+      await updateTrayIcon()
     } catch (e) {
       toast.error(`${e}`)
     } finally {

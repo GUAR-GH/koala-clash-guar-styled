@@ -7,7 +7,7 @@ import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
-import { restartCore, triggerSysProxy } from '@renderer/utils/ipc'
+import { restartCore, triggerSysProxy, updateTrayIcon } from '@renderer/utils/ipc'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Settings } from 'lucide-react'
@@ -62,6 +62,7 @@ const ProxySwitches: React.FC = () => {
             await restartCore()
             window.electron.ipcRenderer.send('updateFloatingWindow')
             window.electron.ipcRenderer.send('updateTrayMenu')
+            await updateTrayIcon()
           }}
         />
       </SettingItem>
@@ -87,6 +88,7 @@ const ProxySwitches: React.FC = () => {
               await patchAppConfig({ sysProxy: { enable } })
               window.electron.ipcRenderer.send('updateFloatingWindow')
               window.electron.ipcRenderer.send('updateTrayMenu')
+              await updateTrayIcon()
             } catch (e) {
               toast.error(`${e}`)
             }
