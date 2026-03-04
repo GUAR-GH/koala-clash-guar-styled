@@ -16,7 +16,7 @@ import { t } from '../utils/i18n'
 let downloadCancelToken: CancelTokenSource | null = null
 
 export async function checkUpdate(): Promise<AppVersion | undefined> {
-  const { 'mixed-port': mixedPort = 7890 } = await getControledMihomoConfig()
+  const { 'mixed-port': mixedPort = 7897 } = await getControledMihomoConfig()
   const url = 'https://github.com/coolcoala/koala-clash/releases/latest/download/latest.yml'
   const res = await axios.get(url, {
     headers: { 'Content-Type': 'application/octet-stream' },
@@ -39,11 +39,8 @@ export async function checkUpdate(): Promise<AppVersion | undefined> {
 }
 
 export async function downloadAndInstallUpdate(version: string): Promise<void> {
-  const { 'mixed-port': mixedPort = 7890 } = await getControledMihomoConfig()
-  let releaseTag = version
-  if (version.includes('beta')) {
-    releaseTag = 'pre-release'
-  }
+  const { 'mixed-port': mixedPort = 7897 } = await getControledMihomoConfig()
+  const releaseTag = version
   const baseUrl = `https://github.com/coolcoala/koala-clash/releases/download/${releaseTag}/`
   const fileMap = {
     'win32-x64': `Koala.Clash_x64-setup.exe`,

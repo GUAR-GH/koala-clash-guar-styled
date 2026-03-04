@@ -25,7 +25,7 @@ const PortSetting: React.FC = () => {
     'allow-lan': allowLan,
     'lan-allowed-ips': lanAllowedIps = [],
     'lan-disallowed-ips': lanDisallowedIps = [],
-    'mixed-port': mixedPort = 7890,
+    'mixed-port': mixedPort = 7897,
     'socks-port': socksPort = 0,
     port: httpPort = 0,
     'redir-port': redirPort = 0,

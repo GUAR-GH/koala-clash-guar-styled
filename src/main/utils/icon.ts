@@ -262,7 +262,7 @@ export async function getIconDataURL(appPath: string): Promise<string> {
 }
 
 export async function getImageDataURL(url: string): Promise<string> {
-  const { 'mixed-port': port = 7890 } = await getControledMihomoConfig()
+  const { 'mixed-port': port = 7897 } = await getControledMihomoConfig()
   const res = await axios.get(url, {
     responseType: 'arraybuffer',
     ...(port != 0 && {

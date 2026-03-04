@@ -40,7 +40,7 @@ export async function startPacServer(): Promise<void> {
   }
   const host = cHost || '127.0.0.1'
   let script = pacScript || defaultPacScript
-  const { 'mixed-port': port = 7890 } = await getControledMihomoConfig()
+  const { 'mixed-port': port = 7897 } = await getControledMihomoConfig()
   script = script.replaceAll('%mixed-port%', port.toString())
   pacPort = await findAvailablePort(10000)
   pacServer = http

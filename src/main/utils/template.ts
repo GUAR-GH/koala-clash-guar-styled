@@ -39,7 +39,7 @@ export const defaultControledMihomoConfig: Partial<MihomoConfig> = {
   },
   secret: '',
   mode: 'rule',
-  'mixed-port': 7890,
+  'mixed-port': 7897,
   'socks-port': 0,
   port: 0,
   'redir-port': 0,

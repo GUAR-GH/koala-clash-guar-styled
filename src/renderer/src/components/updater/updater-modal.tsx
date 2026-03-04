@@ -73,10 +73,6 @@ const UpdaterModal: React.FC<Props> = (props) => {
               variant="outline"
               className="app-nodrag"
               onClick={() => {
-                if (version.includes('beta')) {
-                  open('https://github.com/coolcoala/koala-clash/releases/tag/pre-release')
-                  return
-                }
                 open(`https://github.com/coolcoala/koala-clash/releases/tag/${version}`)
               }}
             >
