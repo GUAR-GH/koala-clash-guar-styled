@@ -34,7 +34,7 @@ export async function setProfileConfig(config: ProfileConfig): Promise<void> {
 export async function getProfileItem(id: string | undefined): Promise<ProfileItem | undefined> {
   const { items } = await getProfileConfig()
   if (!id || id === 'default') return { id: 'default', type: 'local', name: t('ui.blankSubscription') }
-  return items.find((item) => item.id === id)
+  return items?.find((item) => item.id === id)
 }
 
 export async function changeCurrentProfile(id: string): Promise<void> {
@@ -54,7 +54,7 @@ export async function changeCurrentProfile(id: string): Promise<void> {
 
 export async function updateProfileItem(item: ProfileItem): Promise<void> {
   const config = await getProfileConfig()
-  const index = config.items.findIndex((i) => i.id === item.id)
+  const index = (config.items ?? []).findIndex((i) => i.id === item.id)
   if (index === -1) {
     throw new Error('Profile not found')
   }
@@ -66,7 +66,7 @@ export async function updateProfileItem(item: ProfileItem): Promise<void> {
 export async function addProfileItem(item: Partial<ProfileItem>): Promise<void> {
   if (item.url && item.type === 'remote') {
     const config = await getProfileConfig()
-    const duplicate = config.items.find((existing) => existing.url === item.url)
+    const duplicate = config.items?.find((existing) => existing.url === item.url)
     if (duplicate) {
       throw new Error(t('error.duplicateProfile'))
     }
@@ -77,6 +77,7 @@ export async function addProfileItem(item: Partial<ProfileItem>): Promise<void> 
   if (isExisting) {
     await updateProfileItem(newItem)
   } else {
+    if (!config.items) config.items = []
     config.items.push(newItem)
     await setProfileConfig(config)
   }
@@ -93,7 +94,7 @@ export async function removeProfileItem(id: string): Promise<void> {
   let shouldRestart = false
   if (config.current === id) {
     shouldRestart = true
-    if (config.items.length > 0) {
+    if (config.items && config.items.length > 0) {
       config.current = config.items[0].id
     } else {
       config.current = undefined
