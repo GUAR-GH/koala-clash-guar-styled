@@ -29,7 +29,7 @@ const ConnectionItemComponent: React.FC<Props> = ({
   setIsDetailModalOpen
 }) => {
   const fallbackProcessName = useMemo(
-    () => info.metadata.process?.replace(/\.exe$/, '') || info.metadata.sourceIP,
+    () => info.metadata.process || info.metadata.sourceIP,
     [info.metadata.process, info.metadata.sourceIP]
   )
   const processName = displayName || fallbackProcessName

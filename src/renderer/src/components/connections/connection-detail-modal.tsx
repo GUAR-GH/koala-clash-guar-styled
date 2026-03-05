@@ -158,7 +158,7 @@ const ConnectionDetailModal: React.FC<Props> = ({ connection, onClose }) => {
     connection.metadata.destinationIP ||
     connection.metadata.remoteDestination ||
     ''
-  const processName = connection.metadata.process?.replace(/\.exe$/, '') || connection.metadata.sourceIP || ''
+  const processName = connection.metadata.process || connection.metadata.sourceIP || ''
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onClose() }}>
