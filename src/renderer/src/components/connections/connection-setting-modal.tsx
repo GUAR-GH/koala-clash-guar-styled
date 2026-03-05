@@ -19,6 +19,7 @@ import SettingItem from '../base/base-setting-item'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { restartMihomoConnections } from '@renderer/utils/ipc'
 import { t } from 'i18next'
+import { platform } from '@renderer/utils/init'
 
 interface Props {
   onClose: () => void
@@ -50,16 +51,18 @@ const ConnectionSettingModal: React.FC<Props> = (props) => {
               }}
             />
           </SettingItem>
-          <SettingItem title={t('connection.showAppName')} divider>
-            <Switch
-              checked={displayAppName}
-              onCheckedChange={(v) => {
-                patchAppConfig({ displayAppName: v })
-              }}
-            />
-          </SettingItem>
+          {platform === 'darwin' && (
+            <SettingItem title={t('connection.showAppName')} divider>
+              <Switch
+                checked={displayAppName}
+                onCheckedChange={(v) => {
+                  patchAppConfig({ displayAppName: v })
+                }}
+              />
+            </SettingItem>
+          )}
           <SettingItem title={t('connection.refreshInterval')}>
-            <InputGroup className="w-[150px]">
+            <InputGroup className="w-37.5">
               <InputGroupInput
                 type="number"
                 value={connectionInterval?.toString()}
