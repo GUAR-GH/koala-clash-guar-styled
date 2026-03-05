@@ -74,8 +74,7 @@ const Home: React.FC = () => {
     return 0
   })
 
-  const isSelected =
-    mainSwitchMode === 'tun' ? (tun?.enable ?? false) : (sysProxyEnable ?? false)
+  const isSelected = (tun?.enable ?? false) || (sysProxyEnable ?? false)
 
   useEffect(() => {
     if (isSelected) {
