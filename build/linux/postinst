@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Must match productName in electron-builder.yml (lowercase for Linux)
-APP_NAME="koala-clash"
+APP_NAME="Koala.Clash"
 DISPLAY_NAME="Koala Clash"
 
 # Clean up old "sparkle" installation
