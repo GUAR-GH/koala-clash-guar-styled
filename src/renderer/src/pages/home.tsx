@@ -341,7 +341,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate('/proxies')}
               >
                 <div className="flex items-center justify-between h-9 rounded-2xl border border-stroke pl-3 pr-1 py-3 backdrop-blur-xl bg-card/50">
-                  <div className="flag-emoji text-sm truncate max-w-52">{firstGroup.now || '—'}</div>
+                  <div className="flag-emoji text-sm truncate max-w-52">{firstGroup.now || firstGroup.name}</div>
 
                   <ChevronRight />
                 </div>

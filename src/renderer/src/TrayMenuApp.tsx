@@ -166,7 +166,7 @@ const TrayMenuApp: React.FC = () => {
                       </Button>
                       <span
                         className={cn(
-                          'inline-flex items-center justify-center rounded-full px-1.5 text-[10px] font-medium h-5 min-w-[52px]',
+                          'inline-flex items-center justify-center rounded-full px-1.5 text-[10px] font-medium h-5 min-w-13',
                           getDelayClassName(getCurrentDelay(group))
                         )}
                       >
@@ -187,7 +187,7 @@ const TrayMenuApp: React.FC = () => {
                           className={cn(
                             'flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-colors duration-150',
                             isActive
-                              ? 'bg-gradient-to-r from-gradient-start-power-on/15 to-gradient-end-power-on/15 border border-stroke-power-on/30'
+                              ? 'bg-linear-to-r from-gradient-start-power-on/15 to-gradient-end-power-on/15 border border-stroke-power-on/30'
                               : 'hover:bg-accent/50'
                           )}
                         >
@@ -206,7 +206,7 @@ const TrayMenuApp: React.FC = () => {
                           </div>
                           <span
                             className={cn(
-                              'inline-flex items-center justify-center rounded-full px-1.5 text-[10px] font-medium h-4 min-w-[48px] flex-shrink-0',
+                              'inline-flex items-center justify-center rounded-full px-1.5 text-[10px] font-medium h-4 min-w-12 shrink-0',
                               getDelayClassName(delay)
                             )}
                           >
