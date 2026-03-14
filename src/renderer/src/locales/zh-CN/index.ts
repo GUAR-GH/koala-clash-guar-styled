@@ -290,7 +290,10 @@ export default {
       processName: '进程名称',
       switchToTable: '切换到表格视图',
       switchToList: '切换到列表视图',
-      tableColumns: '列'
+      tableColumns: '列',
+      processes: '个进程:',
+      backToProcesses: '返回',
+      unknownProcess: '未知'
     },
     logs: {
       title: '实时日志',

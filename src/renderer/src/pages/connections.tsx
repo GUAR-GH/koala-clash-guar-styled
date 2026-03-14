@@ -26,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { calcTraffic } from '@renderer/utils/calc'
 import ConnectionItem from '@renderer/components/connections/connection-item'
 import ConnectionTable from '@renderer/components/connections/connection-table'
+import ProcessItem, { ProcessGroup } from '@renderer/components/connections/process-item'
 import { Virtuoso } from 'react-virtuoso'
 import dayjs from 'dayjs'
 import ConnectionDetailModal from '@renderer/components/connections/connection-detail-modal'
@@ -40,6 +41,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowDownNarrowWide,
   ArrowDownWideNarrow,
+  ArrowLeft,
   Pause,
   Play,
   SlidersHorizontal,
@@ -99,6 +101,10 @@ const Connections: React.FC = () => {
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'list' | 'table'>(connectionViewMode)
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(connectionTableColumns))
+
+  // Two-level navigation: null = process list, string = selected process path
+  const [selectedProcess, setSelectedProcess] = useState<string | null>(null)
+
   const columnOptions = useMemo(
     () => [
       { key: 'status', label: t('connections.detail.status') },
@@ -134,16 +140,109 @@ const Connections: React.FC = () => {
   const processingAppNames = useRef(new Set<string>())
   const processAppNameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Build process groups from connections
+  const processGroups = useMemo(() => {
+    const groupMap = new Map<
+      string,
+      {
+        processPath: string
+        processName: string
+        activeCount: number
+        closedCount: number
+        totalUpload: number
+        totalDownload: number
+        totalUploadSpeed: number
+        totalDownloadSpeed: number
+      }
+    >()
+
+    const addToGroup = (conn: ControllerConnectionDetail, isActive: boolean) => {
+      const processPath = conn.metadata.processPath || conn.metadata.process || conn.metadata.sourceIP || ''
+      const processName = conn.metadata.process || conn.metadata.sourceIP || ''
+      const existing = groupMap.get(processPath)
+      if (existing) {
+        if (isActive) {
+          existing.activeCount++
+          existing.totalUploadSpeed += conn.uploadSpeed || 0
+          existing.totalDownloadSpeed += conn.downloadSpeed || 0
+        } else {
+          existing.closedCount++
+        }
+        existing.totalUpload += conn.upload
+        existing.totalDownload += conn.download
+      } else {
+        groupMap.set(processPath, {
+          processPath,
+          processName,
+          activeCount: isActive ? 1 : 0,
+          closedCount: isActive ? 0 : 1,
+          totalUpload: conn.upload,
+          totalDownload: conn.download,
+          totalUploadSpeed: isActive ? conn.uploadSpeed || 0 : 0,
+          totalDownloadSpeed: isActive ? conn.downloadSpeed || 0 : 0
+        })
+      }
+    }
+
+    activeConnections.forEach((conn) => addToGroup(conn, true))
+    closedConnections.forEach((conn) => addToGroup(conn, false))
+
+    const groups: ProcessGroup[] = Array.from(groupMap.values()).map((g) => ({
+      ...g,
+      displayName: displayAppName && g.processPath ? appNameCache[g.processPath] : undefined,
+      iconUrl: (displayIcon && findProcessMode !== 'off' && iconMap[g.processPath]) || ''
+    }))
+
+    // Sort by active count descending, then by total traffic
+    groups.sort((a, b) => {
+      if (b.activeCount !== a.activeCount) return b.activeCount - a.activeCount
+      return b.totalUpload + b.totalDownload - (a.totalUpload + a.totalDownload)
+    })
+
+    return groups
+  }, [
+    activeConnections,
+    closedConnections,
+    appNameCache,
+    iconMap,
+    displayIcon,
+    displayAppName,
+    findProcessMode
+  ])
+
+  // Filter process groups by search
+  const filteredProcessGroups = useMemo(() => {
+    if (filter === '') return processGroups
+    return processGroups.filter((pg) => {
+      const searchable = [pg.processName, pg.displayName, pg.processPath]
+        .filter(Boolean)
+        .join(' ')
+      return includesIgnoreCase(searchable, filter)
+    })
+  }, [processGroups, filter])
+
   const filteredConnections = useMemo(() => {
     const connections = tab === 'active' ? activeConnections : closedConnections
 
     let filtered = connections
+
+    // When a process is selected, filter by process
+    if (selectedProcess !== null) {
+      filtered = filtered.filter((conn) => {
+        const connProcessPath =
+          conn.metadata.processPath || conn.metadata.process || conn.metadata.sourceIP || ''
+        return connProcessPath === selectedProcess
+      })
+    }
+
     if (filter !== '') {
-      filtered = connections.filter((connection) => {
+      filtered = filtered.filter((connection) => {
         const searchableFields = [
           connection.metadata.process,
           connection.metadata.host,
+          connection.metadata.sniffHost,
           connection.metadata.destinationIP,
+          connection.metadata.remoteDestination,
           connection.metadata.sourceIP,
           connection.chains?.[0],
           connection.rule,
@@ -193,7 +292,15 @@ const Connections: React.FC = () => {
     }
 
     return filtered
-  }, [activeConnections, closedConnections, filter, connectionDirection, connectionOrderBy, tab])
+  }, [
+    activeConnections,
+    closedConnections,
+    filter,
+    connectionDirection,
+    connectionOrderBy,
+    tab,
+    selectedProcess
+  ])
 
   const trashAllClosedConnection = useCallback((): void => {
     if (closedConnections.length === 0) return
@@ -523,6 +630,44 @@ const Connections: React.FC = () => {
     [patchAppConfig]
   )
 
+  const handleProcessClick = useCallback((processPath: string) => {
+    setSelectedProcess(processPath)
+    setFilter('')
+    setTab('active')
+  }, [])
+
+  const handleBackToProcesses = useCallback(() => {
+    setSelectedProcess(null)
+    setFilter('')
+  }, [])
+
+  // Get the display name of the selected process for the header
+  const selectedProcessName = useMemo(() => {
+    if (selectedProcess === null) return ''
+    const group = processGroups.find((g) => g.processPath === selectedProcess)
+    if (!group) return selectedProcess
+    return group.displayName || group.processName || t('pages.connections.unknownProcess')
+  }, [selectedProcess, processGroups, t])
+
+  const matchesSelectedProcess = useCallback(
+    (conn: ControllerConnectionDetail) => {
+      const connProcessPath =
+        conn.metadata.processPath || conn.metadata.process || conn.metadata.sourceIP || ''
+      return connProcessPath === selectedProcess
+    },
+    [selectedProcess]
+  )
+
+  const processActiveCount = useMemo(() => {
+    if (selectedProcess === null) return 0
+    return activeConnections.filter(matchesSelectedProcess).length
+  }, [activeConnections, selectedProcess, matchesSelectedProcess])
+
+  const processClosedCount = useMemo(() => {
+    if (selectedProcess === null) return 0
+    return closedConnections.filter(matchesSelectedProcess).length
+  }, [closedConnections, selectedProcess, matchesSelectedProcess])
+
   const renderConnectionItem = useCallback(
     (i: number, connection: ControllerConnectionDetail) => {
       const path = connection.metadata.processPath || ''
@@ -560,36 +705,59 @@ const Connections: React.FC = () => {
     ]
   )
 
+  const renderProcessItem = useCallback(
+    (_i: number, process: ProcessGroup) => {
+      return (
+        <ProcessItem
+          key={process.processPath}
+          process={process}
+          displayIcon={displayIcon && findProcessMode !== 'off'}
+          onClick={handleProcessClick}
+        />
+      )
+    },
+    [displayIcon, findProcessMode, handleProcessClick]
+  )
+
+  // Whether we are in the process list view (level 1) or connections view (level 2)
+  const isProcessListView = selectedProcess === null
+
   return (
     <BasePage
-      title={t('pages.connections.title')}
+      title={isProcessListView ? t('pages.connections.title') : selectedProcessName}
       header={
         <div className="flex h-8 items-center gap-1 self-start">
           <div className="flex h-8 items-center gap-1 whitespace-nowrap">
-            <span className="px-1 text-gray-400">↑ {calcTraffic(connectionsInfo?.uploadTotal ?? 0)}</span>
-            <span className="px-1 text-gray-400">↓ {calcTraffic(connectionsInfo?.downloadTotal ?? 0)}</span>
+            <span className="px-1 text-gray-400">
+              {'\u2191'} {calcTraffic(connectionsInfo?.uploadTotal ?? 0)}
+            </span>
+            <span className="px-1 text-gray-400">
+              {'\u2193'} {calcTraffic(connectionsInfo?.downloadTotal ?? 0)}
+            </span>
           </div>
-          <Button
-            className="app-nodrag shrink-0"
-            title={
-              viewMode === 'list'
-                ? t('pages.connections.switchToTable')
-                : t('pages.connections.switchToList')
-            }
-            size="icon-sm"
-            variant="ghost"
-            onClick={async () => {
-              const newMode = viewMode === 'list' ? 'table' : 'list'
-              setViewMode(newMode)
-              await patchAppConfig({ connectionViewMode: newMode })
-            }}
-          >
-            {viewMode === 'list' ? (
-              <Table2 className="text-lg" />
-            ) : (
-              <TableOfContents className="text-lg" />
-            )}
-          </Button>
+          {!isProcessListView && (
+            <Button
+              className="app-nodrag shrink-0"
+              title={
+                viewMode === 'list'
+                  ? t('pages.connections.switchToTable')
+                  : t('pages.connections.switchToList')
+              }
+              size="icon-sm"
+              variant="ghost"
+              onClick={async () => {
+                const newMode = viewMode === 'list' ? 'table' : 'list'
+                setViewMode(newMode)
+                await patchAppConfig({ connectionViewMode: newMode })
+              }}
+            >
+              {viewMode === 'list' ? (
+                <Table2 className="text-lg" />
+              ) : (
+                <TableOfContents className="text-lg" />
+              )}
+            </Button>
+          )}
           <Button
             className="app-nodrag shrink-0"
             title={isPaused ? t('connections.resume') : t('connections.pause')}
@@ -599,36 +767,38 @@ const Connections: React.FC = () => {
           >
             {isPaused ? <Play className="text-lg" /> : <Pause className="text-lg" />}
           </Button>
-          <div className="relative flex items-center">
-            <Button
-              className="app-nodrag shrink-0"
-              title={
-                tab === 'active'
-                  ? t('pages.connections.closeAll')
-                  : t('pages.connections.clearClosed')
-              }
-              size="icon-sm"
-              variant="ghost"
-              onClick={() => {
-                if (filter === '') {
-                  closeAllConnections()
-                } else {
-                  filteredConnections.forEach((conn) => {
-                    closeConnection(conn.id)
-                  })
+          {!isProcessListView && (
+            <div className="relative flex items-center">
+              <Button
+                className="app-nodrag shrink-0"
+                title={
+                  tab === 'active'
+                    ? t('pages.connections.closeAll')
+                    : t('pages.connections.clearClosed')
                 }
-              }}
-            >
-              {tab === 'active' ? (
-                <X className="size-4" />
-              ) : (
-                <Trash2 className="relative -top-px size-4" />
-              )}
-            </Button>
-            <Badge className="absolute -top-0.5 -right-0.5 min-w-3 h-3 justify-center px-0.5 text-[8px] leading-none">
-              {filteredConnections.length}
-            </Badge>
-          </div>
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => {
+                  if (filter === '') {
+                    closeAllConnections()
+                  } else {
+                    filteredConnections.forEach((conn) => {
+                      closeConnection(conn.id)
+                    })
+                  }
+                }}
+              >
+                {tab === 'active' ? (
+                  <X className="size-4" />
+                ) : (
+                  <Trash2 className="relative -top-px size-4" />
+                )}
+              </Button>
+              <Badge className="absolute -top-0.5 -right-0.5 min-w-3 h-3 justify-center px-0.5 text-[8px] leading-none">
+                {filteredConnections.length}
+              </Badge>
+            </div>
+          )}
           <Button
             size="icon-sm"
             className="app-nodrag shrink-0"
@@ -649,101 +819,155 @@ const Connections: React.FC = () => {
       )}
       <div className="overflow-x-auto sticky top-0 z-40">
         <div className="flex px-2 pb-2 gap-2">
-          <Tabs value={tab} onValueChange={handleTabChange} className="w-fit">
-            <TabsList>
-              <TabsTrigger value="active" className="gap-2">
-                <Badge
-                  variant='default'
-                  className="min-w-5 justify-center px-1 leading-none"
-                >
-                  {activeConnections.length}
-                </Badge>
-                <span>{t('pages.connections.active')}</span>
-              </TabsTrigger>
-              <TabsTrigger value="closed" className="gap-2">
-                <Badge
-                  variant='destructive'
-                  className="min-w-5 justify-center px-1 leading-none"
-                >
-                  {closedConnections.length}
-                </Badge>
-                <span>{t('pages.connections.closed')}</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <InputGroup className="h-8 w-45 min-w-30">
-            <InputGroupInput
-              className="h-8 text-sm"
-              value={filter}
-              placeholder={t('common.filter')}
-              onChange={(event) => setFilter(event.target.value)}
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                size="icon-xs"
-                variant="ghost"
-                className={filter ? '' : 'opacity-0 pointer-events-none'}
-                disabled={!filter}
-                aria-label="Clear filter"
-                onClick={() => setFilter('')}
-              >
-                <X className="text-base" />
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
-
-          {viewMode === 'table' && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="secondary" className="gap-1.5">
-                  <SlidersHorizontal className="text-2xl" />
-                  {t('pages.connections.tableColumns')}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64" aria-label="Column visibility">
-                {columnOptions.map((option) => (
-                  <DropdownMenuCheckboxItem
-                    key={option.key}
-                    checked={visibleColumns.has(option.key)}
-                    onCheckedChange={(checked) => handleVisibleColumnToggle(option.key, checked)}
-                  >
-                    {option.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {viewMode === 'list' && (
+          {isProcessListView ? (
             <>
-              <Select value={connectionOrderBy} onValueChange={handleOrderByChange}>
-                <SelectTrigger size="sm" className="min-w-50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="upload">{t('pages.connections.uploadAmount')}</SelectItem>
-                  <SelectItem value="download">{t('pages.connections.downloadAmount')}</SelectItem>
-                  <SelectItem value="uploadSpeed">{t('pages.connections.uploadSpeed')}</SelectItem>
-                  <SelectItem value="downloadSpeed">
-                    {t('pages.connections.downloadSpeed')}
-                  </SelectItem>
-                  <SelectItem value="time">{t('pages.connections.time')}</SelectItem>
-                  <SelectItem value="process">{t('pages.connections.processName')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button className='border flex items-center justify-center' size="icon-sm" variant="secondary" onClick={handleDirectionToggle}>
-                {connectionDirection === 'asc' ? (
-                  <ArrowDownNarrowWide className="text-lg" />
-                ) : (
-                  <ArrowDownWideNarrow className="text-lg" />
-                )}
+              <div className="flex h-8 items-center">
+                <span className="mr-2 text-sm text-muted-foreground whitespace-nowrap">
+                  {t('pages.connections.processes')}
+                </span>
+                <Badge variant="default" className="min-w-5 justify-center px-1.5 leading-none">
+                  {processGroups.length}
+                </Badge>
+              </div>
+              <InputGroup className="h-8 w-45 min-w-30">
+                <InputGroupInput
+                  className="h-8 text-sm"
+                  value={filter}
+                  placeholder={t('common.filter')}
+                  onChange={(event) => setFilter(event.target.value)}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    variant="ghost"
+                    className={filter ? '' : 'opacity-0 pointer-events-none'}
+                    disabled={!filter}
+                    aria-label="Clear filter"
+                    onClick={() => setFilter('')}
+                  >
+                    <X className="text-base" />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-1 shrink-0"
+                onClick={handleBackToProcesses}
+              >
+                <ArrowLeft className="size-4" />
+                {t('pages.connections.backToProcesses')}
               </Button>
+              <Tabs value={tab} onValueChange={handleTabChange} className="w-fit">
+                <TabsList>
+                  <TabsTrigger value="active" className="gap-2">
+                    <Badge variant="default" className="min-w-5 justify-center px-1 leading-none">
+                      {processActiveCount}
+                    </Badge>
+                    <span>{t('pages.connections.active')}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="closed" className="gap-2">
+                    <Badge
+                      variant="destructive"
+                      className="min-w-5 justify-center px-1 leading-none"
+                    >
+                      {processClosedCount}
+                    </Badge>
+                    <span>{t('pages.connections.closed')}</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <InputGroup className="h-8 w-45 min-w-30">
+                <InputGroupInput
+                  className="h-8 text-sm"
+                  value={filter}
+                  placeholder={t('common.filter')}
+                  onChange={(event) => setFilter(event.target.value)}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    variant="ghost"
+                    className={filter ? '' : 'opacity-0 pointer-events-none'}
+                    disabled={!filter}
+                    aria-label="Clear filter"
+                    onClick={() => setFilter('')}
+                  >
+                    <X className="text-base" />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+
+              {viewMode === 'table' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="secondary" className="gap-1.5">
+                      <SlidersHorizontal className="text-2xl" />
+                      {t('pages.connections.tableColumns')}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64" aria-label="Column visibility">
+                    {columnOptions.map((option) => (
+                      <DropdownMenuCheckboxItem
+                        key={option.key}
+                        checked={visibleColumns.has(option.key)}
+                        onCheckedChange={(checked) =>
+                          handleVisibleColumnToggle(option.key, checked)
+                        }
+                      >
+                        {option.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {viewMode === 'list' && (
+                <>
+                  <Select value={connectionOrderBy} onValueChange={handleOrderByChange}>
+                    <SelectTrigger size="sm" className="min-w-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="upload">{t('pages.connections.uploadAmount')}</SelectItem>
+                      <SelectItem value="download">
+                        {t('pages.connections.downloadAmount')}
+                      </SelectItem>
+                      <SelectItem value="uploadSpeed">
+                        {t('pages.connections.uploadSpeed')}
+                      </SelectItem>
+                      <SelectItem value="downloadSpeed">
+                        {t('pages.connections.downloadSpeed')}
+                      </SelectItem>
+                      <SelectItem value="time">{t('pages.connections.time')}</SelectItem>
+                      <SelectItem value="process">{t('pages.connections.processName')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    className="border flex items-center justify-center"
+                    size="icon-sm"
+                    variant="secondary"
+                    onClick={handleDirectionToggle}
+                  >
+                    {connectionDirection === 'asc' ? (
+                      <ArrowDownNarrowWide className="text-lg" />
+                    ) : (
+                      <ArrowDownWideNarrow className="text-lg" />
+                    )}
+                  </Button>
+                </>
+              )}
             </>
           )}
         </div>
       </div>
       <div className="h-[calc(100vh-106px)] mt-px mb-2">
-        {viewMode === 'list' ? (
+        {isProcessListView ? (
+          <Virtuoso data={filteredProcessGroups} itemContent={renderProcessItem} />
+        ) : viewMode === 'list' ? (
           <Virtuoso data={filteredConnections} itemContent={renderConnectionItem} />
         ) : (
           <ConnectionTable

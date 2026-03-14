@@ -1,7 +1,5 @@
-import { Avatar, AvatarImage } from '@renderer/components/ui/avatar'
-import { Badge } from '@renderer/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@renderer/components/ui/avatar'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardFooter, CardHeader } from '@renderer/components/ui/card'
 import { calcTraffic } from '@renderer/utils/calc'
 import dayjs from 'dayjs'
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
@@ -87,65 +85,81 @@ const ConnectionItemComponent: React.FC<Props> = ({
   }, [close, info.id])
 
   return (
-    <div className="px-2 pb-2" style={{ minHeight: 80 }}>
-      <Card
-        className="w-full cursor-pointer py-0 gap-0 hover:bg-accent/50 transition-colors"
+    <div className="px-2 pb-2" style={{ height: 72 }}>
+      <div
+        className={`
+          w-full h-full flex items-center cursor-pointer rounded-xl border
+          transition-all duration-200 ease-out
+          hover:scale-[1.003]
+          ${
+            info.isActive
+              ? 'border-stroke-power-on/30 bg-linear-to-r from-gradient-start-power-on/[0.06] to-card/40 hover:border-stroke-power-on/50 shadow-sm'
+              : 'border-border bg-card/40 hover:bg-accent/50'
+          }
+        `}
         onClick={handleCardPress}
       >
-        <div className="w-full flex justify-between items-center">
+        <div className="w-full flex items-center">
           {displayIcon && (
-            <div>
-              <Avatar className="bg-transparent ml-2 w-14 h-14 rounded-sm">
+            <div className="pl-3">
+              <Avatar className="size-12 rounded-lg">
                 <AvatarImage src={iconUrl} />
+                <AvatarFallback className="rounded-lg text-xs font-semibold text-muted-foreground">
+                  {(processName || '').slice(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
             </div>
           )}
           <div
-            className={`w-full flex flex-col justify-start truncate relative ${displayIcon ? '-ml-2' : ''}`}
+            className={`flex-1 flex flex-col truncate ${displayIcon ? 'pl-3' : 'pl-4'} pr-1`}
           >
-            <CardHeader className="pb-0 gap-1 flex items-center pl-4 pr-1 pt-2">
-              <div className="flex-1 text-ellipsis whitespace-nowrap overflow-hidden text-left">
-                <span style={{ textAlign: 'left' }}>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                <span className="text-sm font-medium truncate">
                   {processName} → {destination}
                 </span>
               </div>
-              <small className="ml-2 whitespace-nowrap text-muted-foreground">{timeAgo}</small>
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                {timeAgo}
+              </span>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className={`shrink-0 ml-1 ${info.isActive ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10' : 'text-destructive hover:text-destructive hover:bg-destructive/10'}`}
+                className={`size-7 shrink-0 ${info.isActive ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10' : 'text-destructive hover:text-destructive hover:bg-destructive/10'}`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleClose()
                 }}
               >
-                {info.isActive ? <X className="text-lg" /> : <Trash2 className="text-lg" />}
+                {info.isActive ? <X /> : <Trash2 />}
               </Button>
-            </CardHeader>
-            <CardFooter className="pt-0.5 px-4 pb-2">
-              <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                <Badge variant="outline" className="rounded-sm gap-1.5">
+            </div>
+            <div className="flex items-center gap-1.5 pb-1">
+              <span className="text-xs text-muted-foreground">
+                {info.metadata.type}({info.metadata.network.toUpperCase()})
+              </span>
+              <span className="text-xs text-muted-foreground/40">|</span>
+              <span className="flag-emoji text-xs text-muted-foreground truncate">
+                {info.chains[0]}
+              </span>
+              <span className="text-xs text-muted-foreground/40">|</span>
+              <span className="text-xs text-muted-foreground">
+                ↑ {uploadTraffic} ↓ {downloadTraffic}
+              </span>
+              {hasSpeed && (
+                <>
+                  <span className="text-xs text-muted-foreground/40">|</span>
                   <span
-                    className={`size-1.5 rounded-full ${info.isActive ? 'bg-primary' : 'bg-destructive'}`}
-                  />
-                  {info.metadata.type}({info.metadata.network.toUpperCase()})
-                </Badge>
-                <Badge variant="outline" className="flag-emoji whitespace-nowrap overflow-hidden rounded-sm">
-                  {info.chains[0]}
-                </Badge>
-                <Badge variant="outline" className="rounded-sm">
-                  ↑ {uploadTraffic} ↓ {downloadTraffic}
-                </Badge>
-                {hasSpeed && (
-                  <Badge variant="outline" className="rounded-sm border-primary/50 text-primary">
+                    className={`text-xs ${info.isActive ? 'text-gradient-end-power-on' : 'text-muted-foreground'}`}
+                  >
                     ↑ {uploadSpeed || '0 B'}/s ↓ {downloadSpeed || '0 B'}/s
-                  </Badge>
-                )}
-              </div>
-            </CardFooter>
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

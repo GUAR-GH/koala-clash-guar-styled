@@ -218,7 +218,10 @@ export default {
       processName: 'Имя процесса',
       switchToTable: 'Переключить на табличный вид',
       switchToList: 'Переключить на список',
-      tableColumns: 'Колонки'
+      tableColumns: 'Колонки',
+      processes: 'Процессов:',
+      backToProcesses: 'Назад',
+      unknownProcess: 'Неизвестный'
     },
     logs: {
       title: 'Логи',

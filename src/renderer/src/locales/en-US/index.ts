@@ -217,7 +217,10 @@ export default {
       processName: 'Process Name',
       switchToTable: 'Switch to table view',
       switchToList: 'Switch to list view',
-      tableColumns: 'Columns'
+      tableColumns: 'Columns',
+      processes: 'Processes:',
+      backToProcesses: 'Back',
+      unknownProcess: 'Unknown'
     },
     logs: {
       title: 'Real-time Logs',
