@@ -175,6 +175,10 @@ export async function createProfile(item: Partial<ProfileItem>): Promise<Profile
 
       const data = res.data
       const headers = res.headers
+      const contentType = (headers['content-type'] || '').toLowerCase()
+      if (contentType.includes('text/html') || contentType.includes('text/xml')) {
+        throw new Error(t('error.subscriptionFormatError'))
+      }
       const hwidLimitKey = Object.keys(headers).find((k) =>
         k.toLowerCase().endsWith('x-hwid-limit')
       )
@@ -248,10 +252,28 @@ export async function createProfile(item: Partial<ProfileItem>): Promise<Profile
         }
       }
       if (newItem.verify) {
+        let parsed: MihomoConfig
         try {
-          parseYaml<MihomoConfig>(data)
+          parsed = parseYaml<MihomoConfig>(data)
         } catch (error) {
           throw new Error(t('error.subscriptionFormatError') + '\n' + (error as Error).message)
+        }
+        if (
+          typeof parsed !== 'object' ||
+          parsed === null ||
+          Array.isArray(parsed) ||
+          !(
+            'proxies' in parsed ||
+            'proxy-providers' in parsed ||
+            'proxy-groups' in parsed ||
+            'rules' in parsed ||
+            'rule-providers' in parsed ||
+            'dns' in parsed ||
+            'tun' in parsed ||
+            'mixed-port' in parsed
+          )
+        ) {
+          throw new Error(t('error.subscriptionFormatError'))
         }
       }
       await setProfileStr(id, data)
