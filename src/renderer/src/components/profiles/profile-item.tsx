@@ -1,4 +1,3 @@
-import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import {
   DropdownMenu,
@@ -9,7 +8,7 @@ import {
 } from '@renderer/components/ui/dropdown-menu'
 import { cn } from '@renderer/lib/utils'
 import { useTranslation } from 'react-i18next'
-import { calcPercent, calcTraffic } from '@renderer/utils/calc'
+import { calcTraffic } from '@renderer/utils/calc'
 import dayjs from 'dayjs'
 import React, { useEffect, useMemo, useState } from 'react'
 import EditFileModal from './edit-file-modal'
@@ -30,8 +29,7 @@ import {
   AlertDialogTitle
 } from '@renderer/components/ui/alert-dialog'
 import {
-  Check,
-  Clock3,
+  Clock,
   EllipsisVertical,
   ExternalLink,
   FileText,
@@ -41,10 +39,8 @@ import {
   ListTree,
   Pencil,
   RefreshCcw,
-  Trash2,
-  X
+  Trash2
 } from 'lucide-react'
-import { Cell, Pie, PieChart } from 'recharts'
 
 interface Props {
   info: ProfileItem
@@ -64,133 +60,6 @@ interface MenuItem {
   variant: 'default' | 'destructive'
 }
 
-const TrafficRing: React.FC<{
-  percent: number
-  size?: number
-  strokeWidth?: number
-  hasLimit: boolean
-  expired: boolean
-}> = ({ percent, size = 40, strokeWidth = 3.5, hasLimit, expired }) => {
-  const normalizedPercent = Math.max(0, Math.min(100, Number.isFinite(percent) ? percent : 0))
-  const outerRadius = size / 2 - 1
-  const innerRadius = Math.max(outerRadius - strokeWidth, 1)
-  const exhausted = hasLimit && normalizedPercent >= 100
-
-  const getColor = (): string => {
-    if (normalizedPercent > 90) return 'var(--destructive)'
-    if (normalizedPercent > 70) return 'var(--warning)'
-    return 'var(--gradient-end-power-on)'
-  }
-
-  const segmentedData = Array.from({ length: 10 }, (_, index) => ({
-    key: `segment-${index}`,
-    value: 1
-  }))
-
-  const ringProps = {
-    dataKey: 'value',
-    cx: '50%',
-    cy: '50%',
-    innerRadius,
-    outerRadius,
-    startAngle: 90,
-    endAngle: -270,
-    stroke: 'none' as const
-  }
-
-  const renderSegmentedRing = (color: string): React.ReactNode => (
-    <Pie
-      {...ringProps}
-      data={segmentedData}
-      paddingAngle={6}
-      cornerRadius={strokeWidth > 2 ? strokeWidth / 4 : 0}
-      isAnimationActive={false}
-    >
-      {segmentedData.map((segment, index) => (
-        <Cell
-          key={segment.key}
-          fill={color}
-          fillOpacity={index % 2 === 0 ? 0.9 : 0.35}
-        />
-      ))}
-    </Pie>
-  )
-
-  if (expired) {
-    return (
-      <div className="relative shrink-0" style={{ width: size, height: size }}>
-        <PieChart width={size} height={size}>
-          {renderSegmentedRing('var(--warning)')}
-        </PieChart>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <Clock3 className="size-3.5 text-warning" />
-        </div>
-      </div>
-    )
-  }
-
-  if (!hasLimit) {
-    return (
-      <div className="relative shrink-0" style={{ width: size, height: size }}>
-        <PieChart width={size} height={size}>
-          {renderSegmentedRing('var(--gradient-end-power-on)')}
-        </PieChart>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <InfinityIcon className="size-3.5 text-gradient-end-power-on" />
-        </div>
-      </div>
-    )
-  }
-
-  if (exhausted) {
-    return (
-      <div className="relative shrink-0" style={{ width: size, height: size }}>
-        <PieChart width={size} height={size}>
-          <Pie
-            {...ringProps}
-            data={[{ value: 100 }]}
-            fill="var(--destructive)"
-            fillOpacity={0.2}
-            isAnimationActive={false}
-          />
-          <Pie {...ringProps} data={[{ value: 100 }]} fill="var(--destructive)" />
-        </PieChart>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <X className="size-3.5 text-destructive" />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <PieChart width={size} height={size}>
-        <Pie
-          {...ringProps}
-          data={[{ value: 100 }]}
-          fill="var(--muted)"
-          fillOpacity={0.3}
-          isAnimationActive={false}
-        />
-        <Pie
-          dataKey="value"
-          data={[{ value: normalizedPercent }]}
-          cx="50%"
-          cy="50%"
-          innerRadius={innerRadius}
-          outerRadius={outerRadius}
-          startAngle={90}
-          endAngle={90 - (normalizedPercent / 100) * 360}
-          fill={getColor()}
-          stroke="none"
-          cornerRadius={strokeWidth > 2 ? strokeWidth / 2 : 0}
-          animationDuration={500}
-        />
-      </PieChart>
-    </div>
-  )
-}
-
 const ProfileItem: React.FC<Props> = (props) => {
   const { t } = useTranslation()
   const {
@@ -205,7 +74,6 @@ const ProfileItem: React.FC<Props> = (props) => {
   const extra = info?.extra
   const usage = (extra?.upload ?? 0) + (extra?.download ?? 0)
   const total = extra?.total ?? 0
-  const percent = calcPercent(extra?.upload, extra?.download, extra?.total)
   const [updating, setUpdating] = useState(false)
   const [selecting, setSelecting] = useState(false)
   const [openInfoEditor, setOpenInfoEditor] = useState(false)
@@ -225,12 +93,57 @@ const ProfileItem: React.FC<Props> = (props) => {
   const [disableSelect, setDisableSelect] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const updatedFromNow = dayjs(info.updated).fromNow()
-  const expireLabel = extra?.expire
-    ? dayjs.unix(extra.expire).format('L')
-    : t('profile.longTermValid')
+
+  const hasLimit = total > 0
+  const expired = extra?.expire ? dayjs.unix(extra.expire).isBefore(dayjs()) : false
+
+  const trafficRemaining = useMemo(() => {
+    if (info.type !== 'remote' || !extra) return null
+    if (!hasLimit) return null
+    const remaining = Math.max(0, total - usage)
+    return calcTraffic(remaining)
+  }, [info.type, extra, hasLimit, total, usage])
+
+  const daysRemaining = useMemo(() => {
+    if (info.type !== 'remote' || !extra) return null
+    if (!extra.expire) return null
+    if (expired) return '0'
+    const days = dayjs.unix(extra.expire).diff(dayjs(), 'day')
+    return days.toString()
+  }, [info.type, extra, expired])
+
+  const intervalLabel = useMemo(() => {
+    if (!info.interval || info.interval <= 0) return null
+    const hours = Math.floor(info.interval / 60)
+    if (hours >= 24) {
+      const days = Math.floor(hours / 24)
+      return `${days}${t('profile.dayShort')}`
+    }
+    if (hours > 0) return `${hours}${t('profile.hourShort')}`
+    return `${info.interval}${t('profile.minuteShort')}`
+  }, [info.interval, t])
 
   const menuItems: MenuItem[] = useMemo(() => {
-    const list: MenuItem[] = [
+    const list: MenuItem[] = []
+    if (info.home) {
+      list.push({
+        key: 'home',
+        label: t('profile.homepage'),
+        icon: <ExternalLink />,
+        showDivider: false,
+        variant: 'default'
+      })
+    }
+    if (info.supportUrl) {
+      list.push({
+        key: 'support',
+        label: t('profile.support'),
+        icon: <HeadsetIcon />,
+        showDivider: false,
+        variant: 'default'
+      })
+    }
+    list.push(
       {
         key: 'edit-info',
         label: t('profile.editInfo'),
@@ -266,30 +179,21 @@ const ProfileItem: React.FC<Props> = (props) => {
         showDivider: false,
         variant: 'destructive'
       }
-    ]
-    if (info.supportUrl) {
-      list.unshift({
-        key: 'support',
-        label: t('profile.support'),
-        icon: <HeadsetIcon />,
-        showDivider: false,
-        variant: 'default'
-      })
-    }
-    if (info.home) {
-      list.unshift({
-        key: 'home',
-        label: t('profile.homepage'),
-        icon: <ExternalLink />,
-        showDivider: false,
-        variant: 'default'
-      })
-    }
+    )
     return list
   }, [info, t])
 
-  const onMenuAction = (key: string): void => {
+  const onMenuAction = async (key: string): Promise<void> => {
     switch (key) {
+      case 'update': {
+        setUpdating(true)
+        try {
+          await addProfileItem(info)
+        } finally {
+          setUpdating(false)
+        }
+        break
+      }
       case 'edit-info': {
         setOpenInfoEditor(true)
         break
@@ -323,25 +227,16 @@ const ProfileItem: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (isDragging) {
-      setTimeout(() => {
-        setDisableSelect(true)
-      }, 100)
+      setTimeout(() => setDisableSelect(true), 100)
     } else {
-      setTimeout(() => {
-        setDisableSelect(false)
-      }, 100)
+      setTimeout(() => setDisableSelect(false), 100)
     }
   }, [isDragging])
 
-  const hasLimit = total > 0
-  const expired = extra?.expire ? dayjs.unix(extra.expire).isBefore(dayjs()) : false
-  const percentLabel = hasLimit ? `${percent}%` : t('pages.home.unlimited')
   const handleSelect = (): void => {
     if (disableSelect || switching) return
     setSelecting(true)
-    onClick().finally(() => {
-      setSelecting(false)
-    })
+    onClick().finally(() => setSelecting(false))
   }
 
   return (
@@ -353,9 +248,7 @@ const ProfileItem: React.FC<Props> = (props) => {
         zIndex: isDragging ? 'calc(infinity)' : undefined
       }}
     >
-      {openFileEditor && (
-        <EditFileModal id={info.id} onClose={() => setOpenFileEditor(false)} />
-      )}
+      {openFileEditor && <EditFileModal id={info.id} onClose={() => setOpenFileEditor(false)} />}
       {openRulesEditor && <EditRulesModal id={info.id} onClose={() => setOpenRulesEditor(false)} />}
       {openInfoEditor && (
         <EditInfoModal
@@ -381,9 +274,7 @@ const ProfileItem: React.FC<Props> = (props) => {
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                setTimeout(() => {
-                  removeProfileItem(info.id)
-                }, 200)
+                setTimeout(() => removeProfileItem(info.id), 200)
               }}
             >
               {t('common.delete')}
@@ -405,98 +296,43 @@ const ProfileItem: React.FC<Props> = (props) => {
           }
         }}
         className={cn(
-          'group relative rounded-2xl border backdrop-blur-xl p-3 cursor-pointer transition-all duration-200',
+          'group relative rounded-2xl border px-4 pt-3 pb-2 cursor-pointer transition-all duration-200',
           isCurrent
-            ? 'border-stroke-power-on bg-linear-to-br from-gradient-start-power-on/10 to-gradient-end-power-on/10'
-            : 'border-stroke bg-card/50 hover:bg-accent/50',
+            ? 'border-stroke-profile-active bg-profile-active hover:bg-profile-active/70'
+            : 'border-stroke-profile-inactive bg-profile-inactive hover:bg-accent',
           selecting && 'opacity-60 scale-[0.98]',
           switching && 'cursor-wait'
         )}
       >
         <div ref={setNodeRef} {...attributes} {...listeners} className="w-full h-full">
-          {/* Header row: favicon + name + badge + actions */}
+          {/* Header: logo + name + menu */}
           <div className="flex items-center gap-2">
-            {/* Favicon or check indicator */}
-            <div
-              className={cn(
-                'flex items-center justify-center shrink-0 size-8 rounded-lg transition-colors duration-200',
-                isCurrent
-                  ? 'bg-linear-to-br from-gradient-start-power-on/30 to-gradient-end-power-on/30'
-                  : 'bg-muted/50'
-              )}
-            >
-              {info.logo ? (
-                <img
-                  src={info.logo}
-                  alt=""
-                  className="size-6 rounded-sm"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.style.display = 'none'
-                    target.parentElement!.innerHTML = isCurrent
-                      ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gradient-end-power-on"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-                      : '<span class="text-xs font-semibold text-muted-foreground">' +
-                        (info.name?.charAt(0)?.toUpperCase() || 'P') +
-                        '</span>'
-                  }}
-                />
-              ) : isCurrent ? (
-                <Check className="w-4 h-4 text-gradient-end-power-on" />
-              ) : (
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {info.name?.charAt(0)?.toUpperCase() || 'P'}
-                </span>
-              )}
-            </div>
-
-            {/* Name + type */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <h3
-                  title={info?.name}
-                  className="text-sm font-medium truncate leading-tight text-foreground"
-                >
-                  {info?.name}
-                </h3>
-                <Badge
-                  variant="ghost"
-                  className={cn(
-                    'text-[10px] px-1.5 py-0 h-4 rounded-md font-medium shrink-0',
-                    info.type === 'remote'
-                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                      : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                  )}
-                >
-                  {info.type === 'remote' ? t('common.remote') : t('common.local')}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div
-              className="flex items-center shrink-0 gap-0.5 -mr-2"
-              onClick={(e) => e.stopPropagation()}
-            >
+            {info.logo && (
+              <img
+                src={info.logo}
+                alt=""
+                className="size-7 rounded-full object-cover shrink-0"
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).style.display = 'none'
+                }}
+              />
+            )}
+            <h3 title={info.name} className="text-sm font-semibold truncate flex-1 leading-tight">
+              {info.name}
+            </h3>
+            <div className="shrink-0 -mr-1 flex items-center" onClick={(e) => e.stopPropagation()}>
               {info.type === 'remote' && (
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    disabled={updating}
-                    onClick={async () => {
-                      setUpdating(true)
-                      await addProfileItem(info)
-                      setUpdating(false)
-                    }}
-                  >
-                    <RefreshCcw
-                      className={cn(
-                        'text-base text-muted-foreground',
-                        updating && 'animate-spin'
-                      )}
-                    />
-                  </Button>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => onMenuAction('update')}
+                  disabled={updating}
+                >
+                  <RefreshCcw
+                    className={cn('text-base text-muted-foreground', updating && 'animate-spin')}
+                  />
+                </Button>
               )}
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="icon-sm" variant="ghost">
@@ -521,54 +357,44 @@ const ProfileItem: React.FC<Props> = (props) => {
             </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <TrafficRing
-              percent={info.type === 'remote' && hasLimit ? percent : 0}
-              size={34}
-              hasLimit={info.type === 'remote' ? hasLimit : false}
-              expired={info.type === 'remote' ? expired : false}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline justify-between">
-                <span className="text-xs font-medium text-foreground">
-                  {info.type === 'remote' ? (
-                    <>
-                      {calcTraffic(usage)}
-                      <span className="text-muted-foreground font-normal">
-                        {' '}/ {hasLimit ? calcTraffic(total) : '∞'}
-                      </span>
-                    </>
-                  ) : (
-                    updatedFromNow
-                  )}
-                </span>
-                {info.type === 'remote' && (
-                  <span
-                    className={cn(
-                      'text-[10px] font-medium',
-                      !hasLimit
-                        ? 'text-muted-foreground'
-                        : percent > 90
-                          ? 'text-destructive'
-                          : percent > 70
-                            ? 'text-warning'
-                            : 'text-gradient-end-power-on'
-                    )}
-                  >
-                    {percentLabel}
-                  </span>
-                )}
+          {/* Stats: traffic remaining | days remaining */}
+          <div className="grid grid-cols-2 mt-2">
+            <div className="pr-3 border-r border-foreground/10 justify-items-center">
+              <div className="text-[11px] text-muted-foreground">
+                {t('profile.trafficRemaining')}
               </div>
-              <div className={cn(
-                'text-[10px] mt-1 flex items-center justify-between',
-                info.type === 'remote' && expired ? 'text-warning font-medium' : 'text-muted-foreground'
-              )}>
-                <span>{info.type === 'remote' && expired ? `⚠ ${expireLabel}` : expireLabel}</span>
-                {info.type === 'remote' && (
-                  <span className="text-muted-foreground">{updatedFromNow}</span>
-                )}
+              <div className="text-sm font-bold mt-0.5 leading-tight">
+                {hasLimit ? trafficRemaining : <InfinityIcon className="size-5" />}
               </div>
             </div>
+            <div className="pl-3 justify-items-center">
+              <div className="text-[11px] text-muted-foreground">
+                {t('profile.daysRemaining')}
+              </div>
+              <div className="text-sm font-bold mt-0.5 leading-tight">
+                {extra?.expire ? daysRemaining : <InfinityIcon className="size-5" />}
+              </div>
+            </div>
+          </div>
+
+
+          {/* Footer */}
+          <div className="border-t border-foreground/10 mt-3 pt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+            {info.type === 'remote' ? (
+              <>
+                <span>
+                  {t('profile.updatedAt')}: {updatedFromNow}
+                </span>
+                {intervalLabel && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="size-3" />
+                    {intervalLabel}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span>{t('profile.localProfileLabel')}</span>
+            )}
           </div>
         </div>
       </div>

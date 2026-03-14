@@ -797,7 +797,15 @@ export default {
     useProxyUpdate: '使用代理更新',
     autoUpdate: '自动更新',
     updateIntervalMinutes: '更新间隔（分钟）',
-    updateIntervalLockedHelp: '当前更新间隔由远程管理'
+    updateIntervalLockedHelp: '当前更新间隔由远程管理',
+    updatedAt: '已更新',
+    updateSubscription: '更新订阅',
+    trafficRemaining: '剩余流量:',
+    daysRemaining: '剩余天数:',
+    hourShort: '时',
+    dayShort: '天',
+    minuteShort: '分',
+    localProfileLabel: '本地配置'
   },
 
   connection: {

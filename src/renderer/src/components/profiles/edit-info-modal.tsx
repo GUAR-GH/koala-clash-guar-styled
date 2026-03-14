@@ -51,7 +51,6 @@ const EditInfoModal: React.FC<Props> = (props) => {
   const [localFileName, setLocalFileName] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
-  const inputWidth = 'w-[300px] md:w-[300px] lg:w-[500px] xl:w-[700px]'
 
   const isNew = !item.id
   const isLocal = values.type === 'local'
@@ -142,9 +141,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
       <DialogContent
         className={cn(
           'sm:max-w-none',
-          isNew
-            ? 'w-[480px]'
-            : 'w-[600px] md:w-[600px] lg:w-[800px] xl:w-5xl'
+          'w-[580px]'
         )}
         showCloseButton={false}
       >
@@ -157,27 +154,37 @@ const EditInfoModal: React.FC<Props> = (props) => {
 
         {isNew ? (
           <div className="flex flex-col gap-3">
-            {/* URL input or local file picker */}
+            {/* Source: URL input or local file picker */}
             {isLocal ? (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={handleSelectFile}
-                >
-                  <FileUp className="size-4" />
-                  {t('profile.selectFile')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={handleCreateEmpty}
-                >
-                  <FilePlus2 className="size-4" />
-                  {t('profile.createEmpty')}
-                </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-2"
+                    onClick={handleSelectFile}
+                  >
+                    <FileUp className="size-4" />
+                    {t('profile.selectFile')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-2"
+                    onClick={handleCreateEmpty}
+                  >
+                    <FilePlus2 className="size-4" />
+                    {t('profile.createEmpty')}
+                  </Button>
+                </div>
+                {values.file && (
+                  <div className="flex items-center gap-2 text-xs text-success">
+                    <Check className="size-3.5" />
+                    {localFileName
+                      ? `${t('profile.fileSelected')}: ${localFileName}`
+                      : t('profile.blankSubscription')}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-1.5">
@@ -218,35 +225,23 @@ const EditInfoModal: React.FC<Props> = (props) => {
               </div>
             )}
 
-            {/* File selected indicator */}
-            {isLocal && values.file && (
-              <div className="flex items-center gap-2 text-xs text-success">
-                <Check className="size-3.5" />
-                {localFileName
-                  ? `${t('profile.fileSelected')}: ${localFileName}`
-                  : t('profile.blankSubscription')}
-              </div>
-            )}
-
             {/* Advanced settings toggle */}
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="self-start -ml-2 text-muted-foreground hover:text-foreground gap-1"
+              className="flex items-center gap-1.5 self-start text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setShowAdvanced(!showAdvanced)}
             >
               <ChevronDown
                 className={cn(
-                  'size-4 transition-transform duration-200',
+                  'size-3.5 transition-transform duration-200',
                   showAdvanced && 'rotate-180'
                 )}
               />
               {t('profile.advancedSettings')}
-            </Button>
+            </button>
 
             {showAdvanced && (
-              <div className="flex flex-col gap-2 border-t pt-3">
+              <div className="rounded-xl border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
                 <SettingItem title={t('profile.profileType')}>
                   <div className="flex gap-1">
                     <Button
@@ -323,7 +318,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
                       >
                         <Input
                           type="number"
-                          className="h-8"
+                          className="h-8 w-24"
                           value={values.interval?.toString() ?? ''}
                           onChange={(e) =>
                             setValues({ ...values, interval: parseInt(e.target.value) })
@@ -338,27 +333,33 @@ const EditInfoModal: React.FC<Props> = (props) => {
             )}
           </div>
         ) : (
-          /* Edit existing profile - original layout */
-          <div className="flex flex-col gap-2 overflow-y-auto max-h-[60vh]">
-            <SettingItem title={t('profile.name')}>
-              <Input
-                className={cn(inputWidth, 'h-8')}
-                value={values.name}
-                onChange={(e) => setValues({ ...values, name: e.target.value })}
-              />
-            </SettingItem>
-            {values.type === 'remote' && (
-              <>
+          /* Edit existing profile */
+          <div className="flex flex-col gap-3 overflow-y-auto max-h-[60vh]">
+            {/* Identity */}
+            <div className="rounded-xl border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
+              <SettingItem title={t('profile.name')}>
+                <Input
+                  className="h-8"
+                  value={values.name}
+                  onChange={(e) => setValues({ ...values, name: e.target.value })}
+                />
+              </SettingItem>
+              {values.type === 'remote' && (
                 <SettingItem title={t('profile.subscriptionAddress')}>
                   <Input
-                    className={cn(inputWidth, 'h-8')}
+                    className="h-8"
                     value={values.url}
                     onChange={(e) => setValues({ ...values, url: e.target.value })}
                   />
                 </SettingItem>
+              )}
+            </div>
+            {/* Remote settings */}
+            {values.type === 'remote' && (
+              <div className="rounded-xl border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
                 <SettingItem title={t('profile.customUA')}>
                   <Input
-                    className={cn(inputWidth, 'h-8')}
+                    className="h-8"
                     value={values.ua ?? ''}
                     onChange={(e) =>
                       setValues({ ...values, ua: e.target.value.trim() || undefined })
@@ -403,7 +404,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
                   >
                     <Input
                       type="number"
-                      className={cn(inputWidth, 'h-8')}
+                      className="h-8 w-24"
                       value={values.interval?.toString() ?? ''}
                       onChange={(e) =>
                         setValues({ ...values, interval: parseInt(e.target.value) })
@@ -412,7 +413,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
                     />
                   </SettingItem>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}

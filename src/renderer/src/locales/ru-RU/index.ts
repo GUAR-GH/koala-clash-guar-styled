@@ -740,7 +740,15 @@ export default {
     useProxyUpdate: 'Обновлять через прокси',
     autoUpdate: 'Автообновление',
     updateIntervalMinutes: 'Интервал обновления (минуты)',
-    updateIntervalLockedHelp: 'Интервал обновления задаётся удалённо'
+    updateIntervalLockedHelp: 'Интервал обновления задаётся удалённо',
+    updatedAt: 'Обновлено',
+    updateSubscription: 'Обновить подписку',
+    trafficRemaining: 'Трафика осталось:',
+    daysRemaining: 'Дней осталось:',
+    hourShort: 'ч',
+    dayShort: 'д',
+    minuteShort: 'м',
+    localProfileLabel: 'Локальный профиль'
   },
 
   connection: {

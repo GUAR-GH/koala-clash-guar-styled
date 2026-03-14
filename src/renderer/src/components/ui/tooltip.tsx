@@ -18,12 +18,75 @@ function TooltipProvider({
   )
 }
 
+/**
+ * Tracks whether the window just regained focus.
+ * Tooltip opening is suppressed until a real pointermove occurs,
+ * preventing phantom tooltips caused by alt+tab.
+ */
+const windowFocusSuppress = {
+  suppressed: false,
+  init: false,
+}
+
+function initWindowFocusTracking(): void {
+  if (windowFocusSuppress.init) return
+  windowFocusSuppress.init = true
+
+  window.addEventListener("blur", () => {
+    windowFocusSuppress.suppressed = true
+  })
+
+  window.addEventListener("pointermove", () => {
+    windowFocusSuppress.suppressed = false
+  }, { passive: true })
+}
+
 function Tooltip({
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : uncontrolledOpen
+
+  React.useEffect(() => {
+    initWindowFocusTracking()
+  }, [])
+
+  const onOpenChange = React.useCallback(
+    (value: boolean) => {
+      if (value && windowFocusSuppress.suppressed) {
+        return
+      }
+      if (!isControlled) {
+        setUncontrolledOpen(value)
+      }
+      onOpenChangeProp?.(value)
+    },
+    [isControlled, onOpenChangeProp]
+  )
+
+  // Force-close when window loses focus (handles already-open tooltips)
+  React.useEffect(() => {
+    if (!open) return
+
+    const handleBlur = (): void => {
+      if (!isControlled) {
+        setUncontrolledOpen(false)
+      }
+      onOpenChangeProp?.(false)
+    }
+
+    window.addEventListener("blur", handleBlur)
+    return () => {
+      window.removeEventListener("blur", handleBlur)
+    }
+  }, [open, isControlled, onOpenChangeProp])
+
   return (
     <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+      <TooltipPrimitive.Root data-slot="tooltip" open={open} onOpenChange={onOpenChange} {...props} />
     </TooltipProvider>
   )
 }

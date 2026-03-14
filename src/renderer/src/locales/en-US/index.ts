@@ -740,7 +740,15 @@ export default {
     useProxyUpdate: 'Update via proxy',
     autoUpdate: 'Auto update',
     updateIntervalMinutes: 'Update Interval (minutes)',
-    updateIntervalLockedHelp: 'The update interval is managed remotely'
+    updateIntervalLockedHelp: 'The update interval is managed remotely',
+    updatedAt: 'Updated',
+    updateSubscription: 'Update subscription',
+    trafficRemaining: 'Traffic left:',
+    daysRemaining: 'Days left:',
+    hourShort: 'h',
+    dayShort: 'd',
+    minuteShort: 'm',
+    localProfileLabel: 'Local profile'
   },
 
   connection: {
