@@ -52,6 +52,8 @@ const ProxyItem: React.FC<Props> = (props) => {
     })
   }
 
+  const displayType =
+    !('all' in proxy) && proxy.serverDescription ? proxy.serverDescription : proxy.type
   const fixed = group.fixed && group.fixed === proxy.name
 
   return (
@@ -79,7 +81,7 @@ const ProxyItem: React.FC<Props> = (props) => {
                   </span>
                 </div>
                 <div className="text-[11px] text-muted-foreground leading-none mt-0.5">
-                  <span>{proxy.type}</span>
+                  <span>{displayType}</span>
                 </div>
               </div>
               <div className="flex items-center justify-center gap-0.5 shrink-0">
@@ -124,8 +126,8 @@ const ProxyItem: React.FC<Props> = (props) => {
                   {proxy.name}
                 </span>
                 {proxyDisplayLayout === 'single' && (
-                  <span className="text-muted-foreground text-xs shrink-0" title={proxy.type}>
-                    {proxy.type}
+                  <span className="text-muted-foreground text-xs shrink-0" title={displayType}>
+                    {displayType}
                   </span>
                 )}
               </div>
