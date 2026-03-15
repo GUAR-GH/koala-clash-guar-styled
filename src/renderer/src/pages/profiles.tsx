@@ -5,7 +5,7 @@ import ProfileItem from '@renderer/components/profiles/profile-item'
 import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import { readTextFile } from '@renderer/utils/ipc'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -48,6 +48,11 @@ const Profiles: React.FC = () => {
     })
   )
   const pageRef = useRef<HTMLDivElement>(null)
+  const dragCounterRef = useRef(0)
+  const addProfileItemRef = useRef(addProfileItem)
+  addProfileItemRef.current = addProfileItem
+  const tRef = useRef(t)
+  tRef.current = t
 
   const onDragEnd = async (event: DragEndEvent): Promise<void> => {
     const { active, over } = event
@@ -64,49 +69,71 @@ const Profiles: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    pageRef.current?.addEventListener('dragover', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
+  const handleDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
+  const handleDragEnter = useCallback((e: DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current++
+    if (dragCounterRef.current === 1) {
       setFileOver(true)
-    })
-    pageRef.current?.addEventListener('dragleave', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setFileOver(false)
-    })
-    pageRef.current?.addEventListener('drop', async (event) => {
-      event.preventDefault()
-      event.stopPropagation()
-      if (event.dataTransfer?.files) {
-        const file = event.dataTransfer.files[0]
-        if (
-          file.name.endsWith('.yml') ||
-          file.name.endsWith('.yaml') ||
-          file.name.endsWith('.json') ||
-          file.name.endsWith('.jsonc') ||
-          file.name.endsWith('.json5') ||
-          file.name.endsWith('.txt')
-        ) {
-          try {
-            const path = window.api.webUtils.getPathForFile(file)
-            const content = await readTextFile(path)
-            await addProfileItem({ name: file.name, type: 'local', file: content })
-          } catch (e) {
-            toast.error(t('pages.profiles.fileImportFailed') + e)
-          }
-        } else {
-          toast.error(t('pages.profiles.unsupportedFileType'))
-        }
-      }
-      setFileOver(false)
-    })
-    return (): void => {
-      pageRef.current?.removeEventListener('dragover', () => {})
-      pageRef.current?.removeEventListener('dragleave', () => {})
-      pageRef.current?.removeEventListener('drop', () => {})
     }
   }, [])
+
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current--
+    if (dragCounterRef.current === 0) {
+      setFileOver(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback(async (event: DragEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragCounterRef.current = 0
+    setFileOver(false)
+    if (event.dataTransfer?.files) {
+      const file = event.dataTransfer.files[0]
+      if (
+        file.name.endsWith('.yml') ||
+        file.name.endsWith('.yaml') ||
+        file.name.endsWith('.json') ||
+        file.name.endsWith('.jsonc') ||
+        file.name.endsWith('.json5') ||
+        file.name.endsWith('.txt')
+      ) {
+        try {
+          const path = window.api.webUtils.getPathForFile(file)
+          const content = await readTextFile(path)
+          await addProfileItemRef.current({ name: file.name, type: 'local', file: content })
+        } catch (e) {
+          toast.error(tRef.current('pages.profiles.fileImportFailed') + e)
+        }
+      } else {
+        toast.error(tRef.current('pages.profiles.unsupportedFileType'))
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const el = pageRef.current
+    if (!el) return
+    el.addEventListener('dragover', handleDragOver)
+    el.addEventListener('dragenter', handleDragEnter)
+    el.addEventListener('dragleave', handleDragLeave)
+    el.addEventListener('drop', handleDrop)
+    return (): void => {
+      el.removeEventListener('dragover', handleDragOver)
+      el.removeEventListener('dragenter', handleDragEnter)
+      el.removeEventListener('dragleave', handleDragLeave)
+      el.removeEventListener('drop', handleDrop)
+    }
+  }, [handleDragOver, handleDragEnter, handleDragLeave, handleDrop])
 
   useEffect(() => {
     setSortedItems(itemsArray)
@@ -191,7 +218,7 @@ const Profiles: React.FC = () => {
 
       {/* File drop overlay */}
       {fileOver && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
           <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 px-12 py-8">
             <FileDown className="size-10 text-primary" />
             <span className="text-sm font-medium text-primary">
