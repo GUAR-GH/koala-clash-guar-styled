@@ -12,11 +12,12 @@ import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import Power from '@renderer/assets/on_icon.svg'
 import Pause from '@renderer/assets/pause_icon.svg'
-import { InfinityIcon, WifiOff, PlusCircle, ChevronRight, Globe } from 'lucide-react'
+import { InfinityIcon, WifiOff, PlusCircle, ChevronRight, Globe, ArrowUp, ArrowDown, RefreshCcw } from 'lucide-react'
 import { SiTelegram } from 'react-icons/si'
 import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
 import { Spinner } from '@renderer/components/ui/spinner'
 import { CharacterMorph } from '@renderer/components/ui/character-morph'
+import { calcTraffic } from '@renderer/utils/calc'
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return '0 B'
@@ -48,6 +49,7 @@ const Home: React.FC = () => {
   const hasProfiles = (profileConfig?.items?.length ?? 0) > 0
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingItem, setEditingItem] = useState<ProfileItem | null>(null)
+  const [updating, setUpdating] = useState(false)
 
   const handleAddProfile = (): void => {
     const newProfile: ProfileItem = {
@@ -61,6 +63,18 @@ const Home: React.FC = () => {
     setEditingItem(newProfile)
     setShowEditModal(true)
   }
+
+  const [connectionsInfo, setConnectionsInfo] = useState<ControllerConnections>()
+
+  useEffect(() => {
+    const handleConnections = (_e: unknown, info: ControllerConnections): void => {
+      setConnectionsInfo(info)
+    }
+    window.electron.ipcRenderer.on('mihomoConnections', handleConnections)
+    return (): void => {
+      window.electron.ipcRenderer.removeListener('mihomoConnections', handleConnections)
+    }
+  }, [])
 
   const [loading, setLoading] = useState(false)
   const [loadingDirection, setLoadingDirection] = useState<'connecting' | 'disconnecting'>(
@@ -119,6 +133,18 @@ const Home: React.FC = () => {
     if (!profileConfig?.current || !profileConfig?.items) return null
     return profileConfig.items.find((item) => item.id === profileConfig.current) ?? null
   }, [profileConfig])
+
+  const handleUpdateProfile = async (): Promise<void> => {
+    if (!currentProfile || updating) return
+    setUpdating(true)
+    try {
+      await addProfileItem(currentProfile)
+    } catch (e) {
+      toast.error(`${e}`)
+    } finally {
+      setUpdating(false)
+    }
+  }
 
   const subscription = currentProfile?.extra
   const trafficUsed = (subscription?.upload ?? 0) + (subscription?.download ?? 0)
@@ -210,13 +236,13 @@ const Home: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="flex flex-col h-full px-2 pb-2 gap-4">
+        <div className="flex flex-col h-full px-2 pb-2 gap-3">
           {/* Profile card */}
           {currentProfile && (
             <div className="rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-4">
               <div
                 data-guide="home-profile-header"
-                className="flex items-center justify-center gap-3 mb-2"
+                className="flex items-center justify-center gap-3"
               >
                 {currentProfile.logo && (
                   <img
@@ -229,15 +255,27 @@ const Home: React.FC = () => {
                   />
                 )}
                 <span className="font-medium text-base">{currentProfile.name}</span>
+                {currentProfile.type === 'remote' && (
+                  <button
+                    onClick={handleUpdateProfile}
+                    disabled={updating}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCcw className={`size-4 ${updating ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
               </div>
               {currentProfile.announce && (
-                <div data-guide="home-profile-announce" className="text-sm font-medium text-center">
+                <div
+                  data-guide="home-profile-announce"
+                  className="text-sm font-medium text-center mt-2"
+                >
                   {currentProfile.announce}
                 </div>
               )}
-              {/* Subscription info */}
             </div>
           )}
+          {/* Subscription info */}
           {subscription && (
             <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center rounded-2xl border border-stroke bg-card/50 backdrop-blur-xl p-1">
               <div className="flex flex-col items-center py-2 px-1">
@@ -262,7 +300,7 @@ const Home: React.FC = () => {
           )}
 
           {/* Connection button */}
-          <div className="flex-1 flex flex-col grow-3 items-center justify-center min-h-0">
+          <div className="flex flex-col grow-3 items-center justify-center min-h-0">
             <div className="mb-3 flex h-6 items-center justify-center">
               <CharacterMorph
                 texts={[status]}
@@ -330,19 +368,36 @@ const Home: React.FC = () => {
                 />
               </div>
             </div>
+            <div
+              aria-hidden={!showConnectedTimer}
+              className={`mt-2 flex items-center gap-4 tabular-nums transition-all duration-300 ease-out ${
+                showConnectedTimer ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <ArrowUp className="size-3.5 text-stroke-power-on" />
+                <span>{calcTraffic(connectionsInfo?.uploadTotal ?? 0)}</span>
+              </div>
+              <div className="h-3 w-px bg-stroke" />
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <ArrowDown className="size-3.5 text-stroke-power-on" />
+                <span>{calcTraffic(connectionsInfo?.downloadTotal ?? 0)}</span>
+              </div>
+            </div>
           </div>
 
           {/* Group & Proxy selectors */}
           {firstGroup && (
-            <div className="flag-emoji flex flex-col grow items-center gap-3 pb-2 mx-auto w-full max-w-3xs max-h-16">
+            <div className="flag-emoji flex flex-col items-center mx-auto w-full max-w-3xs max-h-16">
               <div
                 data-guide="home-group-selector"
                 className="w-full cursor-pointer"
-                onClick={() => navigate('/proxies')}
+                onClick={() => navigate('/proxies', { state: { fromHome: true } })}
               >
                 <div className="flex items-center justify-between h-9 rounded-2xl border border-stroke pl-3 pr-1 py-3 backdrop-blur-xl bg-card/50">
-                  <div className="flag-emoji text-sm truncate max-w-52">{firstGroup.now || firstGroup.name}</div>
-
+                  <div className="flag-emoji text-sm truncate max-w-52">
+                    {firstGroup.now || firstGroup.name}
+                  </div>
                   <ChevronRight />
                 </div>
               </div>
