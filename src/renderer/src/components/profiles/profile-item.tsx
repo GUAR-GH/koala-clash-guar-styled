@@ -296,10 +296,10 @@ const ProfileItem: React.FC<Props> = (props) => {
           }
         }}
         className={cn(
-          'group relative rounded-2xl border px-4 pt-3 pb-2 cursor-pointer transition-all duration-200',
+          'group relative rounded-2xl backdrop-blur-3xl border px-4 pt-3 pb-2 cursor-pointer transition-all duration-200',
           isCurrent
-            ? 'border-stroke-profile-active bg-profile-active hover:bg-profile-active/70'
-            : 'border-stroke-profile-inactive bg-profile-inactive hover:bg-accent',
+            ? 'border-stroke-profile-active bg-profile-active hover:bg-profile-active/90'
+            : 'border-stroke-profile-inactive bg-profile-inactive hover:bg-accent/60',
           selecting && 'opacity-60 scale-[0.98]',
           switching && 'cursor-wait'
         )}
