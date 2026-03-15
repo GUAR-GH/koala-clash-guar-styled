@@ -12,6 +12,7 @@ import {
   mihomoProxyDelay
 } from '@renderer/utils/ipc'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { GroupedVirtuoso, GroupedVirtuosoHandle } from 'react-virtuoso'
 import ProxyItem from '@renderer/components/proxies/proxy-item'
 import ProxySettingModal from '@renderer/components/proxies/proxy-setting-modal'
@@ -40,6 +41,8 @@ const groupTypeColor: Record<string, string> = {
 
 const Proxies: React.FC = () => {
   const { t } = useTranslation()
+  const location = useLocation()
+  const fromHome = (location.state as { fromHome?: boolean })?.fromHome ?? false
   const { controledMihomoConfig } = useControledMihomoConfig()
   const { mode = 'rule' } = controledMihomoConfig || {}
   const { groups = [], mutate } = useGroups()
@@ -411,6 +414,7 @@ const Proxies: React.FC = () => {
   return (
     <BasePage
       title={t('pages.proxies.title')}
+      showBackButton={fromHome}
       header={
         <>
           <Button
