@@ -83,6 +83,7 @@ export default {
     nextStep: '下一步',
     prevStep: '上一步',
     done: '完成',
+    skipTour: '跳过',
     addProfileTitle: '添加订阅',
     addProfileDesc:
       '首页当前没有可用订阅，请先点击“添加订阅”；如果出现深链导入确认弹窗，也可以直接走该流程。',

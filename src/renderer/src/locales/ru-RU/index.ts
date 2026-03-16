@@ -889,6 +889,7 @@ export default {
     nextStep: 'Далее',
     prevStep: 'Назад',
     done: 'Готово',
+    skipTour: 'Пропустить',
     addProfileTitle: 'Добавить профиль',
     addProfileDesc:
       'На главной пока нет профилей. Нажмите «Добавить профиль», чтобы начать.',

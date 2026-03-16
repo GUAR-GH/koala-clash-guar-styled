@@ -889,6 +889,7 @@ export default {
     nextStep: 'Next',
     prevStep: 'Previous',
     done: 'Done',
+    skipTour: 'Skip',
     addProfileTitle: 'Add Profile',
     addProfileDesc:
       'There are no profiles on Home yet. Click "Add Profile" to begin, or use the deep-link import dialog if it appears.',
