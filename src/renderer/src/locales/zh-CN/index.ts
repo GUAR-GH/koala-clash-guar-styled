@@ -294,7 +294,10 @@ export default {
       tableColumns: '列',
       processes: '个进程:',
       backToProcesses: '返回',
-      unknownProcess: '未知'
+      unknownProcess: '未知',
+      classicView: '经典视图',
+      processView: '按进程',
+      connectionListMode: '连接显示模式'
     },
     logs: {
       title: '实时日志',

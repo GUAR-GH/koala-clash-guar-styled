@@ -220,7 +220,10 @@ export default {
       tableColumns: 'Columns',
       processes: 'Processes:',
       backToProcesses: 'Back',
-      unknownProcess: 'Unknown'
+      unknownProcess: 'Unknown',
+      classicView: 'Classic view',
+      processView: 'By process',
+      connectionListMode: 'Connections display mode'
     },
     logs: {
       title: 'Real-time Logs',

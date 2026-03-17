@@ -221,7 +221,10 @@ export default {
       tableColumns: 'Колонки',
       processes: 'Процессов:',
       backToProcesses: 'Назад',
-      unknownProcess: 'Неизвестный'
+      unknownProcess: 'Неизвестный',
+      classicView: 'Классический вид',
+      processView: 'По процессам',
+      connectionListMode: 'Режим отображения соединений'
     },
     logs: {
       title: 'Логи',

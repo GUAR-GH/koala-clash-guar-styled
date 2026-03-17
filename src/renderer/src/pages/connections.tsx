@@ -62,6 +62,7 @@ const Connections: React.FC = () => {
   const {
     connectionDirection = 'asc',
     connectionOrderBy = 'time',
+    connectionListMode = 'process',
     connectionViewMode = 'list',
     connectionTableColumns = [
       'status',
@@ -720,11 +721,13 @@ const Connections: React.FC = () => {
   )
 
   // Whether we are in the process list view (level 1) or connections view (level 2)
-  const isProcessListView = selectedProcess === null
+  // In classic mode, we never show the process list
+  const isClassicMode = connectionListMode === 'classic'
+  const isProcessListView = !isClassicMode && selectedProcess === null
 
   return (
     <BasePage
-      title={isProcessListView ? t('pages.connections.title') : selectedProcessName}
+      title={isProcessListView ? t('pages.connections.title') : (isClassicMode ? t('pages.connections.title') : selectedProcessName)}
       header={
         <div className="flex h-8 items-center gap-1 self-start">
           <div className="flex h-8 items-center gap-1 whitespace-nowrap">
@@ -852,20 +855,22 @@ const Connections: React.FC = () => {
             </>
           ) : (
             <>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="gap-1 shrink-0"
-                onClick={handleBackToProcesses}
-              >
-                <ArrowLeft className="size-4" />
-                {t('pages.connections.backToProcesses')}
-              </Button>
+              {!isClassicMode && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1 shrink-0"
+                  onClick={handleBackToProcesses}
+                >
+                  <ArrowLeft className="size-4" />
+                  {t('pages.connections.backToProcesses')}
+                </Button>
+              )}
               <Tabs value={tab} onValueChange={handleTabChange} className="w-fit">
                 <TabsList>
                   <TabsTrigger value="active" className="gap-2">
                     <Badge variant="default" className="min-w-5 justify-center px-1 leading-none">
-                      {processActiveCount}
+                      {isClassicMode ? activeConnections.length : processActiveCount}
                     </Badge>
                     <span>{t('pages.connections.active')}</span>
                   </TabsTrigger>
@@ -874,7 +879,7 @@ const Connections: React.FC = () => {
                       variant="destructive"
                       className="min-w-5 justify-center px-1 leading-none"
                     >
-                      {processClosedCount}
+                      {isClassicMode ? closedConnections.length : processClosedCount}
                     </Badge>
                     <span>{t('pages.connections.closed')}</span>
                   </TabsTrigger>
