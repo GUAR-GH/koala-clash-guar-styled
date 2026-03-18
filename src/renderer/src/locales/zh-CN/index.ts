@@ -925,6 +925,7 @@ export default {
     displaySingle: '单行',
     displayDouble: '双行',
     disconnectOnSwitch: '切换节点时断开连接',
+    expandProxyGroups: '默认展开代理组',
     delayTestUrl: '延迟测试地址',
     delayTestConcurrency: '延迟测试并发数量',
     delayTestUrlPlaceholder: '默认 https://www.gstatic.com/generate_204',

@@ -868,6 +868,7 @@ export default {
     displaySingle: 'Одна строка',
     displayDouble: 'Две строки',
     disconnectOnSwitch: 'Отключаться при смене узла',
+    expandProxyGroups: 'Раскрывать группы по умолчанию',
     delayTestUrl: 'URL для теста задержки',
     delayTestConcurrency: 'Количество параллельных тестов задержки',
     delayTestUrlPlaceholder: 'По умолчанию: https://www.gstatic.com/generate_204',

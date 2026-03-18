@@ -868,6 +868,7 @@ export default {
     displaySingle: 'Single line',
     displayDouble: 'Double line',
     disconnectOnSwitch: 'Disconnect on Node Switch',
+    expandProxyGroups: 'Expand Groups by Default',
     delayTestUrl: 'Delay Test URL',
     delayTestConcurrency: 'Delay Test Concurrency',
     delayTestUrlPlaceholder: 'Default: https://www.gstatic.com/generate_204',
