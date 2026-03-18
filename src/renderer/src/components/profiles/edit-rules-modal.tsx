@@ -1857,7 +1857,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="p-0"
+                      className="p-0 bg-card/90"
                       align="start"
                       style={{ width: 'var(--radix-popper-anchor-width)' }}
                     >
