@@ -40,7 +40,8 @@ export default {
     settings: 'Settings',
     hideSidebar: 'Hide',
     toggleSidebar: 'Expand',
-    updateAvailable: 'Update'
+    updateAvailable: 'Update',
+    loading: 'Loading...'
   },
 
   validation: {
@@ -704,7 +705,9 @@ export default {
       noResolve: 'Skip DNS resolution (no-resolve)',
       src: 'Match source IP (src)',
       delete: 'Delete rule',
-      restore: 'Restore rule'
+      restore: 'Restore rule',
+      invalidPayload: 'Invalid payload',
+      expectedFormat: 'Expected format'
     },
     openFile: 'Open File',
     delete: 'Delete',

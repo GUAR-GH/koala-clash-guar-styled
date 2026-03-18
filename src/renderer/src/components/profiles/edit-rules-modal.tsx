@@ -1327,7 +1327,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
       !validateRulePayload(editingRule.type, editingRule.payload)
     ) {
       toast.error(
-        (t('profiles.editRules.invalidPayload') || 'Invalid payload') +
+        (t('profile.editRules.invalidPayload') || 'Invalid payload') +
           ': ' +
           getRuleExample(editingRule.type)
       )
@@ -1392,7 +1392,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
       return true
     } catch (e) {
       toast.error(
-        t('profiles.editRules.saveError') + ': ' + (e instanceof Error ? e.message : String(e))
+        t('profile.editRules.saveError') + ': ' + (e instanceof Error ? e.message : String(e))
       )
       return false
     }
@@ -1497,7 +1497,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
         newRule.payload.trim() !== '' &&
         !validateRulePayload(newRule.type, newRule.payload)
       ) {
-        toast.error(t('profiles.editRules.invalidPayload') + ': ' + getRuleExample(newRule.type))
+        toast.error(t('profile.editRules.invalidPayload') + ': ' + getRuleExample(newRule.type))
         return
       }
 

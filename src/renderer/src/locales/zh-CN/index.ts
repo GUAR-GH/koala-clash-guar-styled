@@ -40,7 +40,8 @@ export default {
     settings: '设置',
     hideSidebar: '隐藏',
     toggleSidebar: '展开',
-    updateAvailable: '更新'
+    updateAvailable: '更新',
+    loading: '加载中...'
   },
 
   validation: {
@@ -764,7 +765,9 @@ export default {
       noResolve: '跳过 DNS 解析 (no-resolve)',
       src: '匹配来源 IP (src)',
       delete: '删除规则',
-      restore: '恢复规则'
+      restore: '恢复规则',
+      invalidPayload: '无效的规则内容',
+      expectedFormat: '期望格式'
     },
     openFile: '打开文件',
     delete: '删除',

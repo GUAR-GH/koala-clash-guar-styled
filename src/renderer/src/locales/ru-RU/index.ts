@@ -40,7 +40,8 @@ export default {
     settings: 'Настройки',
     hideSidebar: 'Скрыть',
     toggleSidebar: 'Раскрыть',
-    updateAvailable: 'Обновление'
+    updateAvailable: 'Обновление',
+    loading: 'Загрузка...'
   },
 
   validation: {
@@ -704,7 +705,9 @@ export default {
       noResolve: 'Не выполнять DNS-резолвинг (no-resolve)',
       src: 'Сопоставлять с исходным IP (src)',
       delete: 'Удалить правило',
-      restore: 'Восстановить правило'
+      restore: 'Восстановить правило',
+      invalidPayload: 'Неверное значение',
+      expectedFormat: 'Ожидаемый формат'
     },
     openFile: 'Открыть файл',
     delete: 'Удалить',
