@@ -68,7 +68,7 @@ const UpdaterButton: React.FC<Props> = (props) => {
       {iconOnly ? (
         <Button
           size="icon-lg"
-          className="app-nodrag rounded-md font-medium hover:bg-accent transition-colors bg-gradient-to-br from-gradient-start-power-on/15 to-gradient-end-power-on/15 border border-stroke-power-on/50 text-foreground shadow-sm"
+          className="app-nodrag cursor-pointer rounded-md font-medium hover:bg-accent transition-colors bg-gradient-to-br from-gradient-start-power-on/15 to-gradient-end-power-on/15 border border-stroke-power-on/50 text-foreground shadow-sm"
           onClick={() => {
             setOpenModal(true)
           }}
