@@ -24,6 +24,9 @@ import mapDark from '@renderer/assets/map_darktheme.svg'
 import mapLight from '@renderer/assets/map_lighttheme.svg'
 import { attachConnectionsStore } from '@renderer/store/connections-store'
 import { attachTrafficStore } from '@renderer/store/traffic-store'
+import { attachLogsStore } from '@renderer/store/logs-store'
+import { attachUpdaterStore } from '@renderer/store/updater-store'
+import { attachCoreLifecycleStore } from '@renderer/store/core-lifecycle-store'
 
 let navigate: NavigateFunction
 
@@ -52,9 +55,15 @@ const App: React.FC = () => {
   useEffect(() => {
     const detachConnections = attachConnectionsStore()
     const detachTraffic = attachTrafficStore()
+    const detachLogs = attachLogsStore()
+    const detachUpdater = attachUpdaterStore()
+    const detachCoreLifecycle = attachCoreLifecycleStore()
     return (): void => {
       detachConnections()
       detachTraffic()
+      detachLogs()
+      detachUpdater()
+      detachCoreLifecycle()
     }
   }, [])
 

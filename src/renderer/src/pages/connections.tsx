@@ -1,7 +1,7 @@
 import BasePage from '@renderer/components/base/base-page'
 import { mihomoCloseAllConnections, mihomoCloseConnection } from '@renderer/utils/ipc'
 import { useConnectionsStore } from '@renderer/store/connections-store'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import {
@@ -34,9 +34,7 @@ import ConnectionDetailModal from '@renderer/components/connections/connection-d
 import ConnectionSettingModal from '@renderer/components/connections/connection-setting-modal'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { includesIgnoreCase } from '@renderer/utils/includes'
-import { getIconDataURL, getAppName } from '@renderer/utils/ipc'
-import { cropAndPadTransparent } from '@renderer/utils/image'
-import { platform } from '@renderer/utils/init'
+import { useIconsStore } from '@renderer/store/icons-store'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useTranslation } from 'react-i18next'
 import {
@@ -95,9 +93,10 @@ const Connections: React.FC = () => {
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false)
   const [selected, setSelected] = useState<ControllerConnectionDetail>()
 
-  const [iconMap, setIconMap] = useState<Record<string, string>>({})
-  const [appNameCache, setAppNameCache] = useState<Record<string, string>>({})
-  const [firstItemRefreshTrigger, setFirstItemRefreshTrigger] = useState(0)
+  const iconMap = useIconsStore((s) => s.icons)
+  const appNameCache = useIconsStore((s) => s.appNames)
+  const requestIcon = useIconsStore((s) => s.requestIcon)
+  const requestAppName = useIconsStore((s) => s.requestAppName)
 
   const [tab, setTab] = useState('active')
   const [viewMode, setViewMode] = useState<'list' | 'table'>(connectionViewMode)
@@ -132,14 +131,6 @@ const Connections: React.FC = () => {
     ],
     [t]
   )
-
-  const iconRequestQueue = useRef(new Set<string>())
-  const processingIcons = useRef(new Set<string>())
-  const processIconTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const appNameRequestQueue = useRef(new Set<string>())
-  const processingAppNames = useRef(new Set<string>())
-  const processAppNameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Build process groups from connections
   const processGroups = useMemo(() => {
@@ -338,166 +329,52 @@ const Connections: React.FC = () => {
     [patchAppConfig]
   )
 
-  const processAppNameQueue = useCallback(async () => {
-    if (processingAppNames.current.size >= 3 || appNameRequestQueue.current.size === 0) return
-
-    const pathsToProcess = Array.from(appNameRequestQueue.current).slice(0, 3)
-    pathsToProcess.forEach((path) => appNameRequestQueue.current.delete(path))
-
-    const promises = pathsToProcess.map(async (path) => {
-      if (processingAppNames.current.has(path)) return
-      processingAppNames.current.add(path)
-
-      try {
-        const appName = await getAppName(path)
-        if (appName) {
-          setAppNameCache((prev) => ({ ...prev, [path]: appName }))
-        }
-      } catch {
-        // ignore
-      } finally {
-        processingAppNames.current.delete(path)
-      }
-    })
-
-    await Promise.all(promises)
-
-    if (appNameRequestQueue.current.size > 0) {
-      processAppNameTimer.current = setTimeout(processAppNameQueue, 100)
-    }
-  }, [])
-
-  const processIconQueue = useCallback(async () => {
-    if (processingIcons.current.size >= 5 || iconRequestQueue.current.size === 0) return
-
-    const pathsToProcess = Array.from(iconRequestQueue.current).slice(0, 5)
-    pathsToProcess.forEach((path) => iconRequestQueue.current.delete(path))
-
-    const promises = pathsToProcess.map(async (path) => {
-      if (processingIcons.current.has(path)) return
-      processingIcons.current.add(path)
-
-      try {
-        const rawBase64 = await getIconDataURL(path)
-        if (!rawBase64) return
-
-        const fullDataURL = rawBase64.startsWith('data:')
-          ? rawBase64
-          : `data:image/png;base64,${rawBase64}`
-
-        let processedDataURL = fullDataURL
-        if (platform != 'darwin') {
-          processedDataURL = await cropAndPadTransparent(fullDataURL)
-        }
-
-        try {
-          localStorage.setItem(path, processedDataURL)
-        } catch {
-          // ignore
-        }
-
-        setIconMap((prev) => ({ ...prev, [path]: processedDataURL }))
-
-        const firstConnection = filteredConnections[0]
-        if (firstConnection?.metadata.processPath === path) {
-          setFirstItemRefreshTrigger((prev) => prev + 1)
-        }
-      } catch {
-        // ignore
-      } finally {
-        processingIcons.current.delete(path)
-      }
-    })
-
-    await Promise.all(promises)
-
-    if (iconRequestQueue.current.size > 0) {
-      processIconTimer.current = setTimeout(processIconQueue, 50)
-    }
-  }, [filteredConnections])
-
   useEffect(() => {
     if (!displayIcon || findProcessMode === 'off') return
 
     const visiblePaths = new Set<string>()
     const otherPaths = new Set<string>()
 
-    const visibleConnections = filteredConnections.slice(0, 20)
-    visibleConnections.forEach((c) => {
-      const path = c.metadata.processPath || ''
-      visiblePaths.add(path)
+    filteredConnections.slice(0, 20).forEach((c) => {
+      visiblePaths.add(c.metadata.processPath || '')
     })
 
-    const collectPaths = (connections: ControllerConnectionDetail[]) => {
+    const collectPaths = (connections: ControllerConnectionDetail[]): void => {
       for (const c of connections) {
         const path = c.metadata.processPath || ''
-        if (!visiblePaths.has(path)) {
-          otherPaths.add(path)
-        }
+        if (!visiblePaths.has(path)) otherPaths.add(path)
       }
     }
 
     collectPaths(activeConnections)
     collectPaths(closedConnections)
 
-    const loadIcon = (path: string, isVisible: boolean = false): void => {
-      if (iconMap[path] || processingIcons.current.has(path)) return
-
-      const fromStorage = localStorage.getItem(path)
-      if (fromStorage) {
-        setIconMap((prev) => ({ ...prev, [path]: fromStorage }))
-        if (isVisible && filteredConnections[0]?.metadata.processPath === path) {
-          setFirstItemRefreshTrigger((prev) => prev + 1)
-        }
-        return
-      }
-
-      iconRequestQueue.current.add(path)
-    }
-
-    const loadAppName = (path: string): void => {
-      if (appNameCache[path] || processingAppNames.current.has(path)) return
-      appNameRequestQueue.current.add(path)
-    }
-
     visiblePaths.forEach((path) => {
-      loadIcon(path, true)
-      if (displayAppName) loadAppName(path)
+      requestIcon(path)
+      if (displayAppName) requestAppName(path)
     })
 
-    if (otherPaths.size > 0) {
-      const loadOtherPaths = () => {
-        otherPaths.forEach((path) => {
-          loadIcon(path, false)
-          if (displayAppName) loadAppName(path)
-        })
-      }
+    if (otherPaths.size === 0) return
 
-      setTimeout(loadOtherPaths, 100)
-    }
-
-    if (processIconTimer.current) clearTimeout(processIconTimer.current)
-    if (processAppNameTimer.current) clearTimeout(processAppNameTimer.current)
-
-    processIconTimer.current = setTimeout(processIconQueue, 10)
-    if (displayAppName) {
-      processAppNameTimer.current = setTimeout(processAppNameQueue, 10)
-    }
+    const deferred = setTimeout(() => {
+      otherPaths.forEach((path) => {
+        requestIcon(path)
+        if (displayAppName) requestAppName(path)
+      })
+    }, 100)
 
     return (): void => {
-      if (processIconTimer.current) clearTimeout(processIconTimer.current)
-      if (processAppNameTimer.current) clearTimeout(processAppNameTimer.current)
+      clearTimeout(deferred)
     }
   }, [
     activeConnections,
     closedConnections,
-    iconMap,
-    appNameCache,
     displayIcon,
+    displayAppName,
     filteredConnections,
-    processIconQueue,
-    processAppNameQueue,
-    displayAppName
+    findProcessMode,
+    requestIcon,
+    requestAppName
   ])
 
   const handleTabChange = useCallback((value: string) => {
@@ -583,7 +460,6 @@ const Connections: React.FC = () => {
     (i: number, connection: ControllerConnectionDetail) => {
       const path = connection.metadata.processPath || ''
       const iconUrl = (displayIcon && findProcessMode !== 'off' && iconMap[path]) || ''
-      const itemKey = i === 0 ? `${connection.id}-${firstItemRefreshTrigger}` : connection.id
       const displayName =
         displayAppName && connection.metadata.processPath
           ? appNameCache[connection.metadata.processPath]
@@ -599,7 +475,7 @@ const Connections: React.FC = () => {
           displayName={displayName}
           close={closeConnection}
           index={i}
-          key={itemKey}
+          key={connection.id}
           info={connection}
         />
       )
@@ -607,7 +483,6 @@ const Connections: React.FC = () => {
     [
       displayIcon,
       iconMap,
-      firstItemRefreshTrigger,
       selected,
       closeConnection,
       appNameCache,
