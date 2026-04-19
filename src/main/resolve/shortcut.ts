@@ -38,14 +38,27 @@ export async function registerShortcut(
     case 'triggerSysProxyShortcut': {
       return globalShortcut.register(newShortcut, async () => {
         const {
-          sysProxy: { enable },
+          proxyMode = false,
+          sysProxy: { enable: writeSysProxy = true } = { enable: true },
           onlyActiveDevice = false
         } = await getAppConfig()
+        const enable = !proxyMode
         try {
-          await triggerSysProxy(!enable, onlyActiveDevice)
-          await patchAppConfig({ sysProxy: { enable: !enable } })
+          if (enable) {
+            await patchAppConfig({ proxyMode: true })
+            await restartCore()
+            if (writeSysProxy) {
+              await triggerSysProxy(true, onlyActiveDevice)
+            }
+          } else {
+            if (writeSysProxy) {
+              await triggerSysProxy(false, onlyActiveDevice)
+            }
+            await patchAppConfig({ proxyMode: false })
+            await restartCore()
+          }
           new Notification({
-            title: !enable ? t('notification.sysProxyEnabled') : t('notification.sysProxyDisabled')
+            title: enable ? t('notification.sysProxyEnabled') : t('notification.sysProxyDisabled')
           }).show()
           mainWindow?.webContents.send('appConfigUpdated')
           floatingWindow?.webContents.send('appConfigUpdated')

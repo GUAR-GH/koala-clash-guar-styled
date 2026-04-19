@@ -72,8 +72,11 @@ const Sysproxy: React.FC = () => {
           ]
 
   const { appConfig, patchAppConfig } = useAppConfig()
-  const { sysProxy, onlyActiveDevice = false } =
-    appConfig || ({ sysProxy: { enable: false } } as AppConfig)
+  const {
+    sysProxy,
+    proxyMode = false,
+    onlyActiveDevice = false
+  } = appConfig || ({ sysProxy: { enable: true }, proxyMode: false } as AppConfig)
   const [changed, setChanged] = useState(false)
   const [values, originSetValues] = useState({
     enable: sysProxy.enable,
@@ -101,10 +104,11 @@ const Sysproxy: React.FC = () => {
     const prevEnable = sysProxy.enable ?? false
     await patchAppConfig({ sysProxy: values })
     setChanged(false)
+    if (!proxyMode) return
     if (values.enable) {
       try {
         await restartCore()
-        await triggerSysProxy(values.enable, onlyActiveDevice)
+        await triggerSysProxy(true, onlyActiveDevice)
       } catch (e) {
         toast.error(`${e}`)
         await patchAppConfig({ sysProxy: { enable: false } })
@@ -120,9 +124,27 @@ const Sysproxy: React.FC = () => {
     }
   }
 
+  const onToggleSysProxy = async (enable: boolean): Promise<void> => {
+    setValues({ ...values, enable })
+    await patchAppConfig({ sysProxy: { ...values, enable } })
+    setChanged(false)
+    if (!proxyMode) return
+    try {
+      if (enable) {
+        await triggerSysProxy(true, onlyActiveDevice)
+      } else {
+        await triggerSysProxy(false, onlyActiveDevice)
+      }
+      window.electron.ipcRenderer.send('updateFloatingWindow')
+      window.electron.ipcRenderer.send('updateTrayMenu')
+    } catch (e) {
+      toast.error(`${e}`)
+    }
+  }
+
   return (
     <BasePage
-      title={t('pages.sysproxy.title')}
+      title={t('pages.sysproxy.proxyModeTitle')}
       header={
         changed && (
           <Button className="app-nodrag" size="sm" onClick={onSave}>
@@ -155,6 +177,12 @@ const Sysproxy: React.FC = () => {
         />
       )}
       <SettingCard className="sysproxy-settings">
+        <SettingItem title={t('pages.sysproxy.systemProxyToggle')} divider>
+          <Switch
+            checked={values.enable}
+            onCheckedChange={(v) => onToggleSysProxy(v)}
+          />
+        </SettingItem>
         <SettingItem title={t('pages.sysproxy.proxyHost')} divider>
           <Input
             className="w-[50%]"
