@@ -214,12 +214,6 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'true'
 
-      - name: Generate Changelog
-        run: |
-          TEXT=$(git log $(jq -r .version package.json)..HEAD --pretty=format:%s | grep -v '[0-9]\+\.[0-9]\+\.[0-9]\+$' | sed ':a;N;$!ba;s/\n/\\n/g')
-          echo '# Changelog' > changelog.md
-          echo $TEXT | sed 's/\\n/\n/g' | sed 's/^/ - /g' >> changelog.md
-
       - name: Update Version
         run: |
           INPUT_VERSION="${{ github.event.inputs.version }}"
@@ -263,3 +257,11 @@ jobs:
           files: |
             latest.yml
             bin/dist/*
+
+      - name: Telegram Alert
+        if: success()
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          GROUP_ID: ${{ secrets.TELEGRAM_TO_GROUP }}
+          CHANNEL_ID: ${{ secrets.TELEGRAM_TO_CHANNEL }}
+        run: pnpm telegram
