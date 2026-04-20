@@ -8,8 +8,7 @@ import {
   patchControledMihomoConfig
 } from '../config'
 import { triggerSysProxy } from '../sys/sysproxy'
-import { patchMihomoConfig } from '../core/mihomoApi'
-import { quitWithoutCore, restartCore } from '../core/manager'
+import { quitWithoutCore } from '../core/manager'
 import { floatingWindow, triggerFloatingWindow } from './floatingWindow'
 import { updateTrayIcon } from './tray'
 
@@ -46,7 +45,6 @@ export async function registerShortcut(
         try {
           if (enable) {
             await patchAppConfig({ proxyMode: true })
-            await restartCore()
             if (writeSysProxy) {
               await triggerSysProxy(true, onlyActiveDevice)
             }
@@ -55,7 +53,6 @@ export async function registerShortcut(
               await triggerSysProxy(false, onlyActiveDevice)
             }
             await patchAppConfig({ proxyMode: false })
-            await restartCore()
           }
           new Notification({
             title: enable ? t('notification.sysProxyEnabled') : t('notification.sysProxyDisabled')
@@ -80,7 +77,6 @@ export async function registerShortcut(
           } else {
             await patchControledMihomoConfig({ tun: { enable: !enable } })
           }
-          await restartCore()
           new Notification({
             title: !enable ? t('notification.tunEnabled') : t('notification.tunDisabled')
           }).show()
@@ -97,7 +93,6 @@ export async function registerShortcut(
     case 'ruleModeShortcut': {
       return globalShortcut.register(newShortcut, async () => {
         await patchControledMihomoConfig({ mode: 'rule' })
-        await patchMihomoConfig({ mode: 'rule' })
         new Notification({
           title: t('notification.switchedToRuleMode')
         }).show()
@@ -108,7 +103,6 @@ export async function registerShortcut(
     case 'globalModeShortcut': {
       return globalShortcut.register(newShortcut, async () => {
         await patchControledMihomoConfig({ mode: 'global' })
-        await patchMihomoConfig({ mode: 'global' })
         new Notification({
           title: t('notification.switchedToGlobalMode')
         }).show()
@@ -119,7 +113,6 @@ export async function registerShortcut(
     case 'directModeShortcut': {
       return globalShortcut.register(newShortcut, async () => {
         await patchControledMihomoConfig({ mode: 'direct' })
-        await patchMihomoConfig({ mode: 'direct' })
         new Notification({
           title: t('notification.switchedToDirectMode')
         }).show()

@@ -104,6 +104,7 @@ interface AppConfig {
   displayAppName?: boolean
   disableGPU: boolean
   mainSwitchMode?: 'tun' | 'sysproxy'
+  useHotReloadProfile?: boolean
 }
 
 interface ProfileConfig {

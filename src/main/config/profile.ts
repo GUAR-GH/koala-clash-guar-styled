@@ -2,6 +2,7 @@ import { mihomoProfileWorkDir, mihomoWorkDir, profileConfigPath, profilePath, ru
 import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { restartCore } from '../core/manager'
 import { getRuntimeConfig } from '../core/factory'
+import { mihomoHotReloadConfig } from '../core/mihomoApi'
 import { getAppConfig } from './app'
 import { existsSync } from 'fs'
 import axios, { AxiosResponse } from 'axios'
@@ -42,7 +43,12 @@ export async function changeCurrentProfile(id: string): Promise<void> {
   config.current = id
   await setProfileConfig(config)
   try {
-    await restartCore()
+    const { useHotReloadProfile = true } = await getAppConfig()
+    if (useHotReloadProfile) {
+      await mihomoHotReloadConfig()
+    } else {
+      await restartCore()
+    }
   } catch (e) {
     config.current = current
     throw e
@@ -102,6 +108,15 @@ export async function removeProfileItem(id: string): Promise<void> {
     await rm(profilePath(id))
   }
   if (shouldRestart) {
+    const { useHotReloadProfile = false } = await getAppConfig()
+    if (useHotReloadProfile) {
+      try {
+        await mihomoHotReloadConfig()
+        return
+      } catch {
+        // fall back to restart
+      }
+    }
     await restartCore()
   }
   if (existsSync(mihomoProfileWorkDir(id))) {
@@ -332,7 +347,18 @@ export async function getProfileParseStr(id: string | undefined): Promise<string
 export async function setProfileStr(id: string, content: string): Promise<void> {
   const { current } = await getProfileConfig()
   await writeFile(profilePath(id), content, 'utf-8')
-  if (current === id) await restartCore()
+  if (current === id) {
+    const { useHotReloadProfile = true } = await getAppConfig()
+    if (useHotReloadProfile) {
+      try {
+        await mihomoHotReloadConfig()
+        return
+      } catch {
+        // fall back to restart
+      }
+    }
+    await restartCore()
+  }
 }
 
 export async function getProfile(id: string | undefined): Promise<MihomoConfig> {
