@@ -144,12 +144,6 @@ jobs:
             7z a $_.FullName PORTABLE
           }
 
-      - name: Create Changelog
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git log -1 --pretty=format:"%s%n%b" > changelog.md
-
       - name: Generate latest.yml
         shell: bash
         run: SKIP_CHANGELOG=1 pnpm updater

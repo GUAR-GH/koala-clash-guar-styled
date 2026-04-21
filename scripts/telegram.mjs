@@ -4,7 +4,7 @@ import { extractVersionSection } from './changelog.mjs'
 
 const chat_ids = [process.env.GROUP_ID, process.env.CHANNEL_ID]
 const pkg = readFileSync('package.json', 'utf-8')
-const rawChangelog = readFileSync('changelog.md', 'utf-8')
+const rawChangelog = readFileSync('rawChangelog.md', 'utf-8')
 const { version } = JSON.parse(pkg)
 const changelog = extractVersionSection(rawChangelog, version)
 let content = `<tg-emoji emoji-id='5258249368670073225'>❗️</tg-emoji>   <b><a href="https://github.com/coolcoala/koala-clash/releases/tag/v${version}">New Release</a></b>\n\n`
