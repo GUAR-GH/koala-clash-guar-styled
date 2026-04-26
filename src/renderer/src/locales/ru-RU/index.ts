@@ -86,7 +86,7 @@ export default {
   sider: {
     home: 'Главная',
     proxyGroup: 'Группы прокси',
-    profileManagement: 'Профили',
+    profileManagement: 'Моя подписка',
     rules: 'Правила',
     connection: 'Подключения',
     logs: 'Логи',
@@ -167,7 +167,7 @@ export default {
       group: 'Группа:',
       proxy: 'Прокси:',
       noProfile: 'Нет активного профиля',
-      unlimited: 'Безлимит',
+      unlimited: 'Без лимита',
       never: 'Никогда'
     },
     settings: {
@@ -177,7 +177,7 @@ export default {
       officialDocs: 'Официальная документация'
     },
     profiles: {
-      title: 'Профили',
+      title: 'Моя подписка',
       updateAll: 'Обновить все профили',
       profileSettings: 'Настройки профиля',
       openLocalConfig: 'Открыть локальный конфиг',
@@ -188,8 +188,8 @@ export default {
       unsupportedFileType: 'Неподдерживаемый тип файла',
       checkUpdate: 'Проверить обновления',
       openInBrowser: 'Открыть в браузере',
-      emptyTitle: 'Профилей пока нет',
-      emptyDescription: 'Добавьте профиль, чтобы начать',
+      emptyTitle: 'Профиля пока нет',
+      emptyDescription: 'Чтобы добавить профиль перейдите на страницу \'Моя подписка\'',
       addProfile: 'Добавить профиль',
       dropFileHint: 'Перетащите файл конфигурации сюда',
       hwidLimitTitle: 'Лимит устройств превышен',
@@ -230,7 +230,9 @@ export default {
     },
     logs: {
       title: 'Логи',
-      clearLogs: 'Очистить логи'
+      clearLogs: 'Очистить логи',
+      exportToDesktop: 'Сохранить логи на рабочий стол',
+      exportSuccess: 'На рабочем столе создан {{fileName}}'
     },
     rules: {
       title: 'Правила'
@@ -402,7 +404,7 @@ export default {
     pleaseConfirm: 'Подтвердите действие',
     confirmDelete: 'Подтвердить удаление',
     confirmImportProfile: 'Импортировать конфигурацию подписки?',
-    confirmQuit: 'Вы уверены, что хотите выйти из Koala Clash?',
+    confirmQuit: 'Вы уверены, что хотите выйти из GUAR?',
     quitWarning: 'После выхода прокси перестанет работать',
     quickQuitHint: 'Нажмите дважды или удерживайте кнопку',
     canQuitDirectly: 'для быстрого выхода',
@@ -639,7 +641,7 @@ export default {
       registerTaskSchedule: 'Зарегистрировать задачу'
     },
     serviceModal: {
-      title: 'Управление службой Koala Clash',
+      title: 'Управление службой GUAR',
       serviceStatus: 'Состояние службы',
       connectionStatus: 'Состояние подключения',
       checking: 'Проверка',
@@ -945,7 +947,7 @@ export default {
       'Нажмите на иконку «Главная», чтобы вернуться на главную страницу.',
     supportTitle: 'Поддержка',
     supportDesc: 'Нажмите, чтобы связаться с поддержкой провайдера.',
-    welcome: 'Добро пожаловать в Koala Clash',
+    welcome: 'Добро пожаловать в GUAR',
     welcomeDesc:
       'Краткое руководство поможет быстро разобраться в приложении. Нажмите «Далее», чтобы начать.',
     navbar: 'Панель навигации',
@@ -957,7 +959,7 @@ export default {
     mainArea: 'Рабочая область',
     mainAreaDesc:
       'Основная область для просмотра и редактирования настроек.',
-    profileManagement: 'Профили',
+    profileManagement: 'Моя подписка',
     profileManagementDesc:
       'Карточка профиля показывает текущую подписку. Нажмите, чтобы перейти к управлению. Правый клик — быстрое переключение профилей.',
     profileImport: 'Импорт подписки',

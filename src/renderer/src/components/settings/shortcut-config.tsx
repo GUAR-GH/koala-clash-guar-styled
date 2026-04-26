@@ -52,7 +52,6 @@ const ShortcutConfig: React.FC = () => {
     triggerSysProxyShortcut = '',
     triggerTunShortcut = '',
     ruleModeShortcut = '',
-    globalModeShortcut = '',
     directModeShortcut = '',
     quitWithoutCoreShortcut = '',
     restartAppShortcut = ''
@@ -110,17 +109,6 @@ const ShortcutConfig: React.FC = () => {
             value={ruleModeShortcut}
             patchAppConfig={patchAppConfig}
             action="ruleModeShortcut"
-            activeAction={activeAction}
-            setActiveAction={setActiveAction}
-          />
-        </div>
-      </SettingItem>
-      <SettingItem title={t('settings.shortcuts.switchGlobalMode')} divider>
-        <div className="flex justify-end w-[60%]">
-          <ShortcutInput
-            value={globalModeShortcut}
-            patchAppConfig={patchAppConfig}
-            action="globalModeShortcut"
             activeAction={activeAction}
             setActiveAction={setActiveAction}
           />

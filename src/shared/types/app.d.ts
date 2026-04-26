@@ -66,10 +66,10 @@ interface AppConfig {
   autoSetDNSMode?: 'none' | 'exec' | 'service'
   originDNS?: string
   useWindowFrame: boolean
+  compactWindow?: boolean
   proxyInTray: boolean
   appTheme: AppTheme
   customTheme?: string
-  autoCheckUpdate: boolean
   silentStart: boolean
   autoCloseConnection: boolean
   expandProxyGroups?: boolean

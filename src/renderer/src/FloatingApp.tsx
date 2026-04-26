@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import MihomoIcon from './components/base/mihomo-icon'
 import { calcTraffic } from './utils/calc'
 import { showContextMenu, triggerMainWindow } from './utils/ipc'
 import { useAppConfig } from './hooks/use-app-config'
 import { useControledMihomoConfig } from './hooks/use-controled-mihomo-config'
+import guarLogo from '@renderer/assets/guar-logo.png'
 
 const FloatingApp: React.FC = () => {
   const { appConfig } = useAppConfig()
@@ -60,7 +60,7 @@ const FloatingApp: React.FC = () => {
 
   return (
     <div className="app-drag h-screen w-screen overflow-hidden">
-      <div className="floating-bg border border-stroke flex rounded-full bg-background h-full w-full">
+      <div className="floating-bg border border-stroke flex rounded-full bg-background/75 backdrop-blur-2xl shadow-[0_12px_32px_rgba(217,70,239,0.24)] h-full w-full">
         <div className="flex justify-center items-center h-full aspect-square">
           <div
             onContextMenu={(e) => {
@@ -78,9 +78,9 @@ const FloatingApp: React.FC = () => {
                   }
                 : {}
             }
-            className={`app-nodrag cursor-pointer floating-thumb ${tunEnabled ? 'bg-gradient-end-power-on' : proxyModeEnabled ? 'bg-primary' : 'bg-muted'} hover:opacity-80 rounded-full h-[calc(100%-4px)] aspect-square`}
+            className={`app-nodrag cursor-pointer floating-thumb flex items-center justify-center ${tunEnabled ? 'bg-gradient-end-power-on' : proxyModeEnabled ? 'bg-primary' : 'bg-muted'} hover:opacity-80 rounded-full h-[calc(100%-4px)] aspect-square`}
           >
-            <MihomoIcon className="floating-icon text-primary-foreground h-full leading-full text-[22px] mx-auto" />
+            <img src={guarLogo} alt="GUAR" className="floating-icon aspect-square size-[72%] rounded-full object-contain" />
           </div>
         </div>
         <div className="w-full overflow-hidden">

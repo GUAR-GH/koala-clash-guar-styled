@@ -15,7 +15,6 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { GroupedVirtuoso, GroupedVirtuosoHandle } from 'react-virtuoso'
 import ProxyItem from '@renderer/components/proxies/proxy-item'
-import ProxySettingModal from '@renderer/components/proxies/proxy-setting-modal'
 import { useGroups } from '@renderer/hooks/use-groups'
 import CollapseInput from '@renderer/components/base/collapse-input'
 import { includesIgnoreCase } from '@renderer/utils/includes'
@@ -23,12 +22,9 @@ import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-c
 import { useTranslation } from 'react-i18next'
 import {
   ChevronDown,
-  ChevronsDownUp,
   ChevronsRight,
-  ChevronsUpDown,
   Gauge,
-  LocateFixed,
-  SlidersHorizontal
+  LocateFixed
 } from 'lucide-react'
 
 const groupTypeColor: Record<string, string> = {
@@ -60,7 +56,6 @@ const Proxies: React.FC = () => {
   const [isOpen, setIsOpen] = useState(Array(groups.length).fill(expandProxyGroups))
   const [delaying, setDelaying] = useState(Array(groups.length).fill(false))
   const [searchValue, setSearchValue] = useState(Array(groups.length).fill(''))
-  const [isSettingModalOpen, setIsSettingModalOpen] = useState(false)
   const virtuosoRef = useRef<GroupedVirtuosoHandle>(null)
   const { groupCounts, allProxies } = useMemo(() => {
     const groupCounts: number[] = []
@@ -93,10 +88,6 @@ const Proxies: React.FC = () => {
     })
     return { groupCounts, allProxies }
   }, [groups, isOpen, proxyDisplayOrder, cols, searchValue])
-
-  const allExpanded = useMemo(() => {
-    return groups.length > 0 && isOpen.every(Boolean)
-  }, [groups, isOpen])
 
   const onChangeProxy = useCallback(
     async (group: string, proxy: string): Promise<void> => {
@@ -168,8 +159,10 @@ const Proxies: React.FC = () => {
       return 4
     } else if (window.matchMedia('(min-width: 1024px)').matches) {
       return 3
-    } else {
+    } else if (window.matchMedia('(min-width: 640px)').matches) {
       return 2
+    } else {
+      return 1
     }
   }, [])
 
@@ -178,13 +171,6 @@ const Proxies: React.FC = () => {
       const newOpen = [...prev]
       newOpen[index] = !prev[index]
       return newOpen
-    })
-  }, [])
-
-  const toggleAll = useCallback(() => {
-    setIsOpen((prev) => {
-      const shouldExpand = !prev.every(Boolean)
-      return Array(prev.length).fill(shouldExpand)
     })
   }, [])
 
@@ -272,72 +258,71 @@ const Proxies: React.FC = () => {
               }
             }}
           >
-            <CardContent className="w-full px-4 py-3">
-              <div className="flex justify-between items-center">
-                {/* Left side: icon + name + meta */}
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {group.icon ? (
-                    <Avatar className="bg-transparent rounded-md shrink-0 size-9">
-                      <AvatarImage
-                        src={
-                          group.icon.startsWith('<svg')
-                            ? `data:image/svg+xml;utf8,${group.icon}`
-                            : localStorage.getItem(group.icon) || group.icon
-                        }
-                      />
-                    </Avatar>
-                  ) : null}
-                  <div className={`flex ${groupDisplayLayout === 'double' ? 'flex-col gap-0.5' : 'items-center gap-2'} min-w-0`}>
-                    <span className="flag-emoji text-sm font-medium truncate leading-tight">
-                      {group.name}
-                    </span>
-                    {groupDisplayLayout !== 'hidden' && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground leading-tight min-w-0">
-                        <Badge
-                          variant="ghost"
-                          className={`text-[10px] px-1.5 py-0 h-4 rounded-md font-medium shrink-0 ${typeColorClass}`}
-                        >
-                          {group.type}
-                        </Badge>
-                        <span className="flag-emoji truncate">{group.now}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right side: actions */}
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                    <CollapseInput
-                      value={searchValue[index]}
-                      onValueChange={(v) => updateSearchValue(index, v)}
-                    />
-                    <Button
-                      title={t('sider.locateCurrentNode')}
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => scrollToCurrentProxy(index)}
+            <CardContent className="w-full px-3 py-3">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {group.icon ? (
+                      <Avatar className="bg-transparent rounded-md shrink-0 size-9">
+                        <AvatarImage
+                          src={
+                            group.icon.startsWith('<svg')
+                              ? `data:image/svg+xml;utf8,${group.icon}`
+                              : localStorage.getItem(group.icon) || group.icon
+                          }
+                        />
+                      </Avatar>
+                    ) : null}
+                    <div
+                      className={`min-w-0 flex-1 ${groupDisplayLayout === 'double' ? 'space-y-0.5' : 'space-y-1'}`}
                     >
-                      <LocateFixed className="text-base" />
-                    </Button>
-                    <Button
-                      title={t('sider.delayTest')}
-                      variant="ghost"
-                      size="icon-sm"
-                      disabled={delaying[index]}
-                      aria-busy={delaying[index]}
-                      onClick={() => onGroupDelay(index)}
-                    >
-                      {delaying[index] ? (
-                        <Spinner className="size-4" />
-                      ) : (
-                        <Gauge className="text-base" />
+                      <span className="flag-emoji block truncate text-sm font-medium leading-tight">
+                        {group.name}
+                      </span>
+                      {groupDisplayLayout !== 'hidden' && (
+                        <div className="flex min-w-0 items-center gap-1.5 text-xs leading-tight text-muted-foreground">
+                          <Badge
+                            variant="ghost"
+                            className={`text-[10px] px-1.5 py-0 h-4 rounded-md font-medium shrink-0 ${typeColorClass}`}
+                          >
+                            {group.type}
+                          </Badge>
+                          <span className="flag-emoji min-w-0 truncate">{group.now}</span>
+                        </div>
                       )}
-                    </Button>
+                    </div>
                   </div>
                   <ChevronDown
-                    className={`transition-transform duration-200 ml-1 size-5 ${isOpen[index] ? 'rotate-180' : ''}`}
+                    className={`mt-0.5 size-5 shrink-0 transition-transform duration-200 ${isOpen[index] ? 'rotate-180' : ''}`}
                   />
+                </div>
+
+                <div
+                  className="flex items-center justify-end gap-0.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <CollapseInput
+                    value={searchValue[index]}
+                    onValueChange={(v) => updateSearchValue(index, v)}
+                  />
+                  <Button
+                    title={t('sider.locateCurrentNode')}
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => scrollToCurrentProxy(index)}
+                  >
+                    <LocateFixed className="text-base" />
+                  </Button>
+                  <Button
+                    title={t('sider.delayTest')}
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={delaying[index]}
+                    aria-busy={delaying[index]}
+                    onClick={() => onGroupDelay(index)}
+                  >
+                    {delaying[index] ? <Spinner className="size-4" /> : <Gauge className="text-base" />}
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -413,37 +398,7 @@ const Proxies: React.FC = () => {
   )
 
   return (
-    <BasePage
-      title={t('pages.proxies.title')}
-      showBackButton={fromHome}
-      header={
-        <>
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            className="app-nodrag"
-            title={allExpanded ? t('pages.proxies.collapseAll') : t('pages.proxies.expandAll')}
-            onClick={toggleAll}
-          >
-            {allExpanded ? (
-              <ChevronsDownUp className="text-lg" />
-            ) : (
-              <ChevronsUpDown className="text-lg" />
-            )}
-          </Button>
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            className="app-nodrag"
-            title={t('pages.proxies.proxyGroupSettings')}
-            onClick={() => setIsSettingModalOpen(true)}
-          >
-            <SlidersHorizontal className="text-lg" />
-          </Button>
-        </>
-      }
-    >
-      {isSettingModalOpen && <ProxySettingModal onClose={() => setIsSettingModalOpen(false)} />}
+    <BasePage title={t('pages.proxies.title')} showBackButton={fromHome}>
       {mode === 'direct' ? (
         <div className="h-full w-full flex justify-center items-center">
           <div className="flex flex-col items-center gap-3">

@@ -144,8 +144,8 @@ const DetailRow: React.FC<{ label: string; children: React.ReactNode }> = ({ lab
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div>
-    <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider mb-1">{title}</h4>
-    <div className="rounded-lg bg-muted/30 px-3 py-1 divide-y divide-border/50">
+    <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-normal mb-1">{title}</h4>
+    <div className="rounded-md bg-muted/30 px-3 py-1 divide-y divide-border/50">
       {children}
     </div>
   </div>

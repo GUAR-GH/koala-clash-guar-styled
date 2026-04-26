@@ -242,7 +242,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
             </button>
 
             {showAdvanced && (
-              <div className="rounded-xl border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
+              <div className="rounded-lg border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
                 <SettingItem title={t('profile.profileType')}>
                   <div className="flex gap-1">
                     <Button
@@ -337,7 +337,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
           /* Edit existing profile */
           <div className="flex flex-col gap-3 overflow-y-auto max-h-[60vh]">
             {/* Identity */}
-            <div className="rounded-xl border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
+            <div className="rounded-lg border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
               <SettingItem title={t('profile.name')}>
                 <Input
                   className="h-8"
@@ -357,7 +357,7 @@ const EditInfoModal: React.FC<Props> = (props) => {
             </div>
             {/* Remote settings */}
             {values.type === 'remote' && (
-              <div className="rounded-xl border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
+              <div className="rounded-lg border border-stroke/50 bg-accent/20 p-3 flex flex-col gap-2">
                 <SettingItem title={t('profile.customUA')}>
                   <Input
                     className="h-8"

@@ -1,10 +1,10 @@
 {
-  "name": "koala-clash",
+  "name": "guar-clash",
   "version": "1.2.0",
-  "description": "Koala Clash",
+  "description": "GUAR Clash",
   "main": "./out/main/index.js",
-  "author": "xishang0128, co-author: coolcoala",
-  "homepage": "https://github.com/coolcoala/koala-clash",
+  "author": "GUAR-GH",
+  "homepage": "https://github.com/GUAR-GH/GUAR",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",

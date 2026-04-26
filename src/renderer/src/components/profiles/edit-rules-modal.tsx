@@ -837,7 +837,7 @@ const RuleListItemBase: React.FC<RuleListItemProps> = ({
       <div
         ref={setNodeRef}
         style={sortableStyle}
-        className="p-3 rounded-xl border-2 border-primary/50 bg-primary/5 flex flex-col gap-2 animate-in fade-in-0 duration-150"
+        className="p-3 rounded-lg border-2 border-primary/50 bg-primary/5 flex flex-col gap-2 animate-in fade-in-0 duration-150"
         onKeyDown={handleEditKeyDown}
       >
         {isEditingLogicalRule ? (
@@ -918,7 +918,7 @@ const RuleListItemBase: React.FC<RuleListItemProps> = ({
       ref={setNodeRef}
       style={sortableStyle}
       className={cn(
-        'flex items-center gap-2 p-2.5 rounded-xl border group transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out',
+        'flex items-center gap-2 p-2.5 rounded-lg border group transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out',
         isDeleted && 'bg-destructive/10 opacity-70 border-destructive/20 cursor-not-allowed',
         !isDeleted &&
           isCustom &&
@@ -1708,7 +1708,7 @@ const EditRulesModal: React.FC<Props> = (props) => {
     <DragOverlay dropAnimation={null} adjustScale={false}>
       {activeRule ? (
         <div
-          className="flex items-center gap-2 p-2.5 rounded-xl border border-primary/40 bg-background/95 shadow-2xl ring-1 ring-primary/20 backdrop-blur-sm"
+          className="flex items-center gap-2 p-2.5 rounded-lg border border-primary/40 bg-background/95 shadow-2xl ring-1 ring-primary/20 backdrop-blur-sm"
           style={
             activeDragSize
               ? {

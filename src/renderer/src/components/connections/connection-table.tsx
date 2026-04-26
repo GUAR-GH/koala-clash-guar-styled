@@ -373,10 +373,10 @@ const ConnectionTable: React.FC<Props> = ({
   const visibleColumnsFiltered = columnsWithLabels.filter((col) => col.visible)
 
   return (
-    <div className="h-full flex flex-col border rounded-2xl overflow-hidden mx-2">
+    <div className="glass-surface h-full flex flex-col rounded-lg overflow-hidden mx-2">
       <div ref={tableRef} className="flex-1 overflow-auto">
         <table className="w-full border-collapse">
-          <thead className="sticky top-0 z-10 bg-muted">
+          <thead className="sticky top-0 z-10 bg-muted/70 backdrop-blur-xl">
             <tr>
               {visibleColumnsFiltered.map((col) => (
                 <th
@@ -415,7 +415,7 @@ const ConnectionTable: React.FC<Props> = ({
             {sortedConnections.map((connection) => (
               <tr
                 key={connection.id}
-                className="border-b border-border hover:bg-muted cursor-pointer transition-colors h-12"
+                className="border-b border-border/70 hover:bg-muted/70 cursor-pointer transition-colors h-12"
                 onClick={() => {
                   setSelected(connection)
                   setIsDetailModalOpen(true)
@@ -450,12 +450,12 @@ const ConnectionTable: React.FC<Props> = ({
                 })}
                 <td className="sticky right-1.5 bg-inherit" onClick={(e) => e.stopPropagation()}>
                   <Button
-                    variant="default"
+                    variant="ghost"
                     size="icon-sm"
                     className={
                       connection.isActive
-                        ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 bg-zinc-900'
-                        : 'text-destructive hover:text-destructive hover:bg-destructive/10 bg-zinc-900'
+                        ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10'
+                        : 'text-destructive hover:text-destructive hover:bg-destructive/10'
                     }
                     onClick={() => {
                       close(connection.id)

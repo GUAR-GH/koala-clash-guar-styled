@@ -24,11 +24,11 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "rounded-lg p-[3px] group-data-[orientation=horizontal]/tabs:h-8 data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "rounded-sm p-[3px] group-data-[orientation=horizontal]/tabs:h-8 data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
   {
     variants: {
       variant: {
-        default: "border border-stroke bg-card/50 backdrop-blur-xl",
+        default: "glass-surface",
         line: "gap-1 bg-transparent",
       },
     },
@@ -62,7 +62,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex h-[calc(100%-1px)] items-center justify-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all duration-200",
+        "relative inline-flex h-[calc(100%-1px)] items-center justify-center gap-1 rounded-[3px] px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all duration-200",
         "text-muted-foreground hover:text-foreground",
         "border border-transparent",
         "group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start",

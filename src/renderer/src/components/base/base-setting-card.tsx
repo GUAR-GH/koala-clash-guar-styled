@@ -15,7 +15,7 @@ const SettingCard: React.FC<Props> = (props) => {
     </Card>
   ) : (
     <Accordion
-      className={`${props.className} mx-2 mb-2 px-6 rounded-xl border text-card-foreground shadow-sm`}
+      className={`${props.className} glass-surface mx-2 mb-2 px-6 rounded-lg text-card-foreground`}
       type="single"
       collapsible
       {...props}

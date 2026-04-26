@@ -1,19 +1,24 @@
-import { exec, execFile, execSync, spawn } from 'child_process'
+import { exec, execFile, execFileSync, execSync, spawn } from 'child_process'
 import { app, dialog, nativeTheme, shell } from 'electron'
-import { readFile } from 'fs/promises'
+import { readdir, readFile, writeFile } from 'fs/promises'
 import path from 'path'
 import { promisify } from 'util'
 import {
   dataDir,
   exePath,
+  logDir,
   mihomoCorePath,
   profilePath,
   resourcesDir,
   resourcesFilesDir,
   taskDir
 } from '../utils/dirs'
-import { copyFileSync, writeFileSync } from 'fs'
+import { copyFileSync, existsSync, writeFileSync } from 'fs'
 import { t } from '../utils/i18n'
+
+const elevateTaskName = 'guar-clash-run'
+const elevateTaskRunner = 'guar-clash-run.exe'
+const sourceTaskRunner = 'koala-clash-run.exe'
 
 export function getFilePath(ext: string[]): string[] | undefined {
   return dialog.showOpenDialogSync({
@@ -25,6 +30,53 @@ export function getFilePath(ext: string[]): string[] | undefined {
 
 export async function readTextFile(filePath: string): Promise<string> {
   return await readFile(filePath, 'utf8')
+}
+
+function getUniqueDesktopLogPath(): string {
+  const desktop = app.getPath('desktop')
+  const baseName = 'guarclash-logs'
+  const extension = '.txt'
+  let index = 0
+  let target = path.join(desktop, `${baseName}${extension}`)
+
+  while (existsSync(target)) {
+    index += 1
+    target = path.join(desktop, `${baseName} (${index})${extension}`)
+  }
+
+  return target
+}
+
+export async function exportLogsToDesktop(rendererLogs: ControllerLog[] = []): Promise<string> {
+  const sections: string[] = [
+    `GUAR Clash logs`,
+    `Exported: ${new Date().toLocaleString()}`,
+    ''
+  ]
+
+  try {
+    const files = (await readdir(logDir())).filter((file) => file.endsWith('.log')).sort()
+    for (const file of files) {
+      const content = await readFile(path.join(logDir(), file), 'utf8')
+      sections.push(`===== ${file} =====`, content.trimEnd(), '')
+    }
+  } catch {
+    sections.push('===== Core log files =====', 'No saved log files found.', '')
+  }
+
+  if (rendererLogs.length > 0) {
+    sections.push(
+      '===== Live UI logs =====',
+      rendererLogs
+        .map((log) => `[${log.time ?? ''}] [${log.type ?? ''}] ${log.payload ?? ''}`.trim())
+        .join('\n'),
+      ''
+    )
+  }
+
+  const target = getUniqueDesktopLogPath()
+  await writeFile(target, sections.join('\n'), 'utf8')
+  return target
 }
 
 export function openFile(id: string): void {
@@ -94,7 +146,7 @@ const elevateTaskXml = `<?xml version="1.0" encoding="UTF-16"?>
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>"${path.join(taskDir(), `koala-clash-run.exe`)}"</Command>
+      <Command>"${path.join(taskDir(), elevateTaskRunner)}"</Command>
       <Arguments>"${exePath()}"</Arguments>
     </Exec>
   </Actions>
@@ -102,20 +154,50 @@ const elevateTaskXml = `<?xml version="1.0" encoding="UTF-16"?>
 `
 
 export function createElevateTaskSync(): void {
-  const taskFilePath = path.join(taskDir(), `koala-clash-run.xml`)
+  const taskFilePath = path.join(taskDir(), `${elevateTaskName}.xml`)
   writeFileSync(taskFilePath, Buffer.from(`\ufeff${elevateTaskXml}`, 'utf-16le'))
   copyFileSync(
-    path.join(resourcesFilesDir(), 'koala-clash-run.exe'),
-    path.join(taskDir(), 'koala-clash-run.exe')
+    path.join(resourcesFilesDir(), sourceTaskRunner),
+    path.join(taskDir(), elevateTaskRunner)
   )
   execSync(
-    `%SystemRoot%\\System32\\schtasks.exe /create /tn "koala-clash-run" /xml "${taskFilePath}" /f`
+    `%SystemRoot%\\System32\\schtasks.exe /create /tn "${elevateTaskName}" /xml "${taskFilePath}" /f`
   )
+}
+
+export function runElevateTaskSync(args: string[]): boolean {
+  const runnerPath = path.join(taskDir(), elevateTaskRunner)
+  if (!existsSync(runnerPath)) return false
+
+  try {
+    const taskXmlBuffer = execFileSync('schtasks.exe', ['/query', '/tn', elevateTaskName, '/xml'], {
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
+    const taskXml = (taskXmlBuffer.includes(0)
+      ? taskXmlBuffer.toString('utf16le')
+      : taskXmlBuffer.toString('utf8')
+    )
+      .replace(/&quot;/g, '"')
+      .toLowerCase()
+
+    if (
+      !taskXml.includes(exePath().toLowerCase()) ||
+      !taskXml.includes(runnerPath.toLowerCase())
+    ) {
+      return false
+    }
+
+    writeFileSync(path.join(taskDir(), 'param.txt'), args.length > 0 ? args.join(' ') : 'empty')
+    execFileSync('schtasks.exe', ['/run', '/tn', elevateTaskName], { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function deleteElevateTask(): Promise<void> {
   try {
-    execSync(`%SystemRoot%\\System32\\schtasks.exe /delete /tn "koala-clash-run" /f`)
+    execSync(`%SystemRoot%\\System32\\schtasks.exe /delete /tn "${elevateTaskName}" /f`)
   } catch {
     // ignore
   }
@@ -123,7 +205,7 @@ export async function deleteElevateTask(): Promise<void> {
 
 export async function checkElevateTask(): Promise<boolean> {
   try {
-    execSync(`%SystemRoot%\\System32\\schtasks.exe /query /tn "koala-clash-run"`, { stdio: 'pipe' })
+    execSync(`%SystemRoot%\\System32\\schtasks.exe /query /tn "${elevateTaskName}"`, { stdio: 'pipe' })
     return true
   } catch {
     return false

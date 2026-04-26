@@ -6,18 +6,17 @@ import {
   patchAppConfig,
   patchControledMihomoConfig
 } from '../config'
-import icoIcon from '../../../resources/icon.ico?asset'
-import icoIconOff from '../../../resources/icon_off.ico?asset'
 import pngIcon from '../../../resources/icon.png?asset'
 import pngIconOff from '../../../resources/icon_off.png?asset'
+import icoIcon from '../../../resources/icon.ico?asset'
+import icoIconOff from '../../../resources/icon_off.ico?asset'
 import macIconOn from '../../../resources/icon_on_mac.png?asset'
 import macIconOff from '../../../resources/icon_off_mac.png?asset'
 import {
   mihomoChangeProxy,
   mihomoCloseAllConnections,
   mihomoGroups,
-  mihomoGroupDelay,
-  patchMihomoConfig
+  mihomoGroupDelay
 } from '../core/mihomoApi'
 import { mainWindow, setNotQuitDialog, showMainWindow, triggerMainWindow } from '..'
 import {
@@ -41,6 +40,13 @@ import { t } from '../utils/i18n'
 
 export let tray: Tray | null = null
 let customTrayWindow: BrowserWindow | null = null
+
+function createWindowsTrayIcon(enabled: boolean): Electron.NativeImage {
+  return nativeImage.createFromPath(enabled ? icoIcon : icoIconOff).resize({
+    width: 32,
+    height: 32
+  })
+}
 
 function formatDelayText(delay: number): string {
   if (delay === 0) {
@@ -133,7 +139,7 @@ async function handleTrayClick(): Promise<void> {
 }
 
 export const buildContextMenu = async (): Promise<Menu> => {
-  const { mode, tun } = await getControledMihomoConfig()
+  const { tun } = await getControledMihomoConfig()
   const {
     sysProxy,
     proxyMode = false,
@@ -145,8 +151,6 @@ export const buildContextMenu = async (): Promise<Menu> => {
     triggerSysProxyShortcut = '',
     showWindowShortcut = '',
     triggerTunShortcut = '',
-    ruleModeShortcut = '',
-    globalModeShortcut = '',
     quitWithoutCoreShortcut = '',
     restartAppShortcut = ''
   } = await getAppConfig()
@@ -265,41 +269,6 @@ export const buildContextMenu = async (): Promise<Menu> => {
         }
       }
     },
-    { type: 'separator' },
-    {
-      type: 'submenu',
-      label: `${t('tray.outboundMode')} (${mode === 'rule' ? t('tray.rule') : t('tray.global')})`,
-      submenu: [
-        {
-          id: 'rule',
-          label: t('tray.ruleMode'),
-          accelerator: ruleModeShortcut,
-          type: 'radio',
-          checked: mode === 'rule',
-          click: async (): Promise<void> => {
-            await patchControledMihomoConfig({ mode: 'rule' })
-            await patchMihomoConfig({ mode: 'rule' })
-            mainWindow?.webContents.send('controledMihomoConfigUpdated')
-            mainWindow?.webContents.send('groupsUpdated')
-            ipcMain.emit('updateTrayMenu')
-          }
-        },
-        {
-          id: 'global',
-          label: t('tray.globalMode'),
-          accelerator: globalModeShortcut,
-          type: 'radio',
-          checked: mode === 'global',
-          click: async (): Promise<void> => {
-            await patchControledMihomoConfig({ mode: 'global' })
-            await patchMihomoConfig({ mode: 'global' })
-            mainWindow?.webContents.send('controledMihomoConfigUpdated')
-            mainWindow?.webContents.send('groupsUpdated')
-            ipcMain.emit('updateTrayMenu')
-          }
-        }
-      ]
-    },
     ...groupsMenu,
     { type: 'separator' },
     {
@@ -368,9 +337,9 @@ export async function createTray(): Promise<void> {
     tray = new Tray(icon)
   }
   if (process.platform === 'win32') {
-    tray = new Tray(icoIcon)
+    tray = new Tray(createWindowsTrayIcon(true))
   }
-  tray?.setToolTip('Koala Clash')
+  tray?.setToolTip('GUAR Clash')
   tray?.setIgnoreDoubleClickEvents(true)
   await updateTrayIcon()
   if (process.platform === 'darwin') {
@@ -481,7 +450,7 @@ export async function updateTrayIcon(): Promise<void> {
       icon.setTemplateImage(true)
       tray.setImage(icon)
     } else if (process.platform === 'win32') {
-      tray.setImage(proxyEnabled ? icoIcon : icoIconOff)
+      tray.setImage(createWindowsTrayIcon(proxyEnabled))
     } else {
       tray.setImage(proxyEnabled ? pngIcon : pngIconOff)
     }

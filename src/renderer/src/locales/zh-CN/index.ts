@@ -121,7 +121,7 @@ export default {
     sidebarHomeDesc: '点击侧边栏中的首页图标，返回首页并完成教程。',
     supportTitle: '技术支持',
     supportDesc: '点击这里可以联系服务提供方支持。',
-    welcome: '欢迎使用 Koala Clash',
+    welcome: '欢迎使用 GUAR',
     welcomeDesc:
       '这是一份交互式使用教程，如果您已经完全熟悉本软件的操作，可以直接点击右上角关闭按钮，后续您可以随时从设置中打开本教程',
     navbar: '导航栏',
@@ -131,12 +131,12 @@ export default {
     cardDesc: '点击导航栏卡片可以跳转到对应页面，拖动导航栏卡片可以自由排列卡片顺序',
     mainArea: '主要区域',
     mainAreaDesc: '右侧是应用的主要区域，展示了导航栏所选页面的内容',
-    profileManagement: '订阅管理',
+    profileManagement: '我的订阅',
     profileManagementDesc:
       '订阅管理卡片展示当前运行的订阅配置信息，点击进入订阅管理页面可以在这里管理订阅配置',
     profileImport: '订阅导入',
     profileImportDesc:
-      'Koala Clash 支持多种订阅导入方式，在此输入订阅链接，点击导入即可导入您的订阅配置，如果您的订阅需要代理才能更新，请勾选"代理"再点击导入，当然这需要已经有一个可以正常使用的订阅才可以',
+      'GUAR 支持多种订阅导入方式，在此输入订阅链接，点击导入即可导入您的订阅配置，如果您的订阅需要代理才能更新，请勾选"代理"再点击导入，当然这需要已经有一个可以正常使用的订阅才可以',
     localProfile: '本地订阅',
     localProfileDesc: '点击"+"可以选择本地文件进行导入或者直接新建空白配置进行编辑',
     sysProxy: '系统代理',
@@ -150,7 +150,7 @@ export default {
       '虚拟网卡，即同类软件中常见的"Tun 模式"，对于某些不遵循系统代理的应用，您可以打开虚拟网卡以让内核接管所有流量',
     tunSettings: '虚拟网卡设置',
     tunSettingsDesc:
-      '这里可以更改虚拟网卡相关设置，Koala Clash 理论上已经完全解决权限问题，如果您的虚拟网卡仍然不可用，可以尝试重设防火墙（Windows）或手动授权内核（MacOS/Linux）后重启内核',
+      '这里可以更改虚拟网卡相关设置，GUAR 理论上已经完全解决权限问题，如果您的虚拟网卡仍然不可用，可以尝试重设防火墙（Windows）或手动授权内核（MacOS/Linux）后重启内核',
     dnsDesc:
       '软件默认接管了内核的 DNS 设置，如果您需要使用订阅配置中的 DNS 设置，可以到应用设置中关闭"接管 DNS 设置"，域名嗅探同理',
     tutorialEnd: '教程结束',
@@ -160,7 +160,7 @@ export default {
   sider: {
     home: '首页',
     proxyGroup: '代理组',
-    profileManagement: '订阅管理',
+    profileManagement: '我的订阅',
     rules: '规则',
     connection: '连接',
     logs: '日志',
@@ -251,7 +251,7 @@ export default {
       officialDocs: '官方文档'
     },
     profiles: {
-      title: '订阅管理',
+      title: '我的订阅',
       updateAll: '更新全部订阅',
       profileSettings: '订阅设置',
       openLocalConfig: '打开本地配置',
@@ -262,8 +262,8 @@ export default {
       unsupportedFileType: '不支持的文件类型',
       checkUpdate: '检查更新',
       openInBrowser: '在浏览器中打开',
-      emptyTitle: '暂无订阅',
-      emptyDescription: '添加订阅以开始使用',
+      emptyTitle: '当前没有订阅',
+      emptyDescription: '如需添加订阅，请前往“我的订阅”页面',
       addProfile: '添加订阅',
       dropFileHint: '将配置文件拖放到此处',
       hwidLimitTitle: '设备数量超限',
@@ -303,7 +303,9 @@ export default {
     },
     logs: {
       title: '实时日志',
-      clearLogs: '清空日志'
+      clearLogs: '清空日志',
+      exportToDesktop: '保存日志到桌面',
+      exportSuccess: '已在桌面创建 {{fileName}}'
     },
     rules: {
       title: '分流规则'
@@ -470,7 +472,7 @@ export default {
     pleaseConfirm: '请确认',
     confirmDelete: '确认删除',
     confirmImportProfile: '确定要导入订阅配置吗？',
-    confirmQuit: '确定要退出 Koala Clash 吗？',
+    confirmQuit: '确定要退出 GUAR 吗？',
     quitWarning: '退出后代理功能将停止工作',
     quickQuitHint: '快按两次或长按',
     canQuitDirectly: '可直接退出',
@@ -700,7 +702,7 @@ export default {
       registerTaskSchedule: '注册计划'
     },
     serviceModal: {
-      title: 'Koala Clash 服务管理',
+      title: 'GUAR 服务管理',
       serviceStatus: '服务状态',
       connectionStatus: '连接状态',
       checking: '检查中',

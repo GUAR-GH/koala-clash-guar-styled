@@ -305,20 +305,6 @@ export async function getRuntimeConfig(): Promise<MihomoConfig> {
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('getRuntimeConfig'))
 }
 
-export async function checkUpdate(): Promise<AppVersion | undefined> {
-  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('checkUpdate'))
-}
-
-export async function downloadAndInstallUpdate(version: string): Promise<void> {
-  return ipcErrorWrapper(
-    await window.electron.ipcRenderer.invoke('downloadAndInstallUpdate', version)
-  )
-}
-
-export async function cancelUpdate(): Promise<void> {
-  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('cancelUpdate'))
-}
-
 export async function getVersion(): Promise<string> {
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('getVersion'))
 }
@@ -421,6 +407,10 @@ export async function resetAppConfig(): Promise<void> {
 
 export async function createHeapSnapshot(): Promise<void> {
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('createHeapSnapshot'))
+}
+
+export async function exportLogsToDesktop(logs: ControllerLog[]): Promise<string> {
+  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('exportLogsToDesktop', logs))
 }
 
 export async function getUserAgent(): Promise<string> {

@@ -85,7 +85,7 @@ export default {
   sider: {
     home: 'Home',
     proxyGroup: 'Proxy Groups',
-    profileManagement: 'Profile Management',
+    profileManagement: 'My Subscription',
     rules: 'Rules',
     connection: 'Connections',
     logs: 'Logs',
@@ -176,7 +176,7 @@ export default {
       officialDocs: 'Official Documentation'
     },
     profiles: {
-      title: 'Profile Management',
+      title: 'My Subscription',
       updateAll: 'Update all profiles',
       profileSettings: 'Profile settings',
       openLocalConfig: 'Open local config',
@@ -187,8 +187,8 @@ export default {
       unsupportedFileType: 'Unsupported file type',
       checkUpdate: 'Check for updates',
       openInBrowser: 'Open in browser',
-      emptyTitle: 'No profiles yet',
-      emptyDescription: 'Add a profile to get started',
+      emptyTitle: 'No profile yet',
+      emptyDescription: 'To add a profile, open the \'My Subscription\' page',
       addProfile: 'Add Profile',
       dropFileHint: 'Drop config file here',
       hwidLimitTitle: 'Device limit exceeded',
@@ -229,7 +229,9 @@ export default {
     },
     logs: {
       title: 'Real-time Logs',
-      clearLogs: 'Clear logs'
+      clearLogs: 'Clear logs',
+      exportToDesktop: 'Save logs to Desktop',
+      exportSuccess: 'Created {{fileName}} on Desktop'
     },
     rules: {
       title: 'Routing Rules'
@@ -401,7 +403,7 @@ export default {
     pleaseConfirm: 'Please Confirm',
     confirmDelete: 'Confirm Delete',
     confirmImportProfile: 'Confirm import subscription config?',
-    confirmQuit: 'Are you sure you want to quit Koala Clash?',
+    confirmQuit: 'Are you sure you want to quit GUAR?',
     quitWarning: 'Proxy functionality will stop working after quitting',
     quickQuitHint: 'Double press or long press',
     canQuitDirectly: 'to quit directly',
@@ -638,7 +640,7 @@ export default {
       registerTaskSchedule: 'Register Task Schedule'
     },
     serviceModal: {
-      title: 'Koala Clash Service Management',
+      title: 'GUAR Service Management',
       serviceStatus: 'Service Status',
       connectionStatus: 'Connection Status',
       checking: 'Checking',
@@ -944,7 +946,7 @@ export default {
     sidebarHomeDesc: 'Click the Home icon in the sidebar to return and finish the tutorial.',
     supportTitle: 'Support',
     supportDesc: 'Click here to contact your provider support.',
-    welcome: 'Welcome to Koala Clash',
+    welcome: 'Welcome to GUAR',
     welcomeDesc:
       'This is an interactive tutorial to help you quickly get familiar with this app. Click "Next" to continue.',
     navbar: 'Navigation Bar',
@@ -955,7 +957,7 @@ export default {
       'Clicking on a card expands its details page. Some cards also have a quick toggle switch that can be triggered directly by clicking the switch.',
     mainArea: 'Main Area',
     mainAreaDesc: 'This is the main operation area where you can view and edit detailed settings.',
-    profileManagement: 'Profile Management',
+    profileManagement: 'My Subscription',
     profileManagementDesc:
       'The profile management card displays the current subscription information. Click to enter the profile management page. Right-click the card to quickly switch profiles.',
     profileImport: 'Import Subscription',

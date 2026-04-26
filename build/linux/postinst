@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_NAME="Koala.Clash"
+APP_NAME="GUAR Clash"
 
 # Clean up old "sparkle" installation
 if [ -L '/usr/bin/sparkle' ]; then

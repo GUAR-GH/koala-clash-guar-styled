@@ -100,16 +100,6 @@ export async function registerShortcut(
         ipcMain.emit('updateTrayMenu')
       })
     }
-    case 'globalModeShortcut': {
-      return globalShortcut.register(newShortcut, async () => {
-        await patchControledMihomoConfig({ mode: 'global' })
-        new Notification({
-          title: t('notification.switchedToGlobalMode')
-        }).show()
-        mainWindow?.webContents.send('controledMihomoConfigUpdated')
-        ipcMain.emit('updateTrayMenu')
-      })
-    }
     case 'directModeShortcut': {
       return globalShortcut.register(newShortcut, async () => {
         await patchControledMihomoConfig({ mode: 'direct' })
@@ -144,7 +134,6 @@ export async function initShortcut(): Promise<void> {
     triggerSysProxyShortcut,
     triggerTunShortcut,
     ruleModeShortcut,
-    globalModeShortcut,
     directModeShortcut,
     quitWithoutCoreShortcut,
     restartAppShortcut
@@ -180,13 +169,6 @@ export async function initShortcut(): Promise<void> {
   if (ruleModeShortcut) {
     try {
       await registerShortcut('', ruleModeShortcut, 'ruleModeShortcut')
-    } catch {
-      // ignore
-    }
-  }
-  if (globalModeShortcut) {
-    try {
-      await registerShortcut('', globalModeShortcut, 'globalModeShortcut')
     } catch {
       // ignore
     }

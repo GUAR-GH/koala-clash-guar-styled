@@ -7,5 +7,6 @@ export async function getUserAgent(): Promise<string> {
     return userAgent
   }
 
-  return `koala-clash/${version}`
+  // Subscription gateways often choose the output format from the client User-Agent.
+  return `guar/${version}`
 }

@@ -1,20 +1,21 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { registerIpcMainHandlers } from './utils/ipc'
 import windowStateKeeper from 'electron-window-state'
-import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, powerMonitor, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, powerMonitor, screen, shell } from 'electron'
 import { addProfileItem, getAppConfig, patchControledMihomoConfig } from './config'
 import { quitWithoutCore, startCore, stopCore } from './core/manager'
 import { triggerSysProxy } from './sys/sysproxy'
-import icon from '../../resources/icon.png?asset'
+import pngIcon from '../../resources/icon.png?asset'
+import icoIcon from '../../resources/icon.ico?asset'
 import { createTray } from './resolve/tray'
 import { createApplicationMenu } from './resolve/menu'
 import { init } from './utils/init'
 import path, { join } from 'path'
 import { initShortcut } from './resolve/shortcut'
-import { execSync, spawn } from 'child_process'
-import { createElevateTaskSync } from './sys/misc'
+import { spawn } from 'child_process'
+import { createElevateTaskSync, runElevateTaskSync } from './sys/misc'
 import { initProfileUpdater } from './core/profileUpdater'
-import { existsSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { exePath, taskDir } from './utils/dirs'
 import { showFloatingWindow } from './resolve/floatingWindow'
 import { getAppConfigSync } from './config/app'
@@ -24,6 +25,24 @@ import { t } from './utils/i18n'
 let quitTimeout: NodeJS.Timeout | null = null
 export let mainWindow: BrowserWindow | null = null
 export let needsFirstRunAdmin = false
+
+app.setName('GUAR Clash')
+
+const COMPACT_WINDOW = {
+  width: 340,
+  height: 520,
+  minWidth: 340,
+  minHeight: 520
+}
+
+function getWindowLayout(): typeof COMPACT_WINDOW {
+  const base = COMPACT_WINDOW
+  const workArea = screen.getPrimaryDisplay().workAreaSize
+  return {
+    ...base,
+    height: Math.min(base.height, Math.max(base.minHeight, workArea.height - 40))
+  }
+}
 
 /**
  * Show error to the user via renderer toast notification.
@@ -37,10 +56,13 @@ export function showError(title: string, message: string): void {
   }
 }
 let pendingDeepLink: string | null = null
+let coreReadyForDeepLinks = false
+let handlingPendingDeepLink = false
 let isCreatingWindow = false
 let windowShown = false
 let createWindowPromiseResolve: (() => void) | null = null
 let createWindowPromise: Promise<void> | null = null
+const DEEP_LINK_PATTERN = /guar:\/\/[^\s"']+/i
 
 async function scheduleLightweightMode(): Promise<void> {
   const {
@@ -81,21 +103,12 @@ if (
 ) {
   try {
     createElevateTaskSync()
-  } catch (createError) {
-    try {
-      if (process.argv.slice(1).length > 0) {
-        writeFileSync(path.join(taskDir(), 'param.txt'), process.argv.slice(1).join(' '))
-      } else {
-        writeFileSync(path.join(taskDir(), 'param.txt'), 'empty')
-      }
-      if (!existsSync(path.join(taskDir(), 'koala-clash-run.exe'))) {
-        throw new Error('koala-clash-run.exe not found')
-      } else {
-        execSync('%SystemRoot%\\System32\\schtasks.exe /run /tn koala-clash-run')
-      }
+  } catch {
+    // Only use the runner when the registered task points to this exact build.
+    // Stale tasks from dev/old builds can point to a deleted executable.
+    if (runElevateTaskSync(process.argv.slice(1))) {
       app.exit()
-    } catch {
-      // First launch without admin — continue startup and show UI notification
+    } else {
       needsFirstRunAdmin = true
     }
   }
@@ -141,31 +154,77 @@ if (syncConfig.disableGPU) {
   app.disableHardwareAcceleration()
 }
 
+function normalizeDeepLink(value: string | undefined): string | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim().replace(/^["']|["']$/g, '')
+  if (trimmed.toLowerCase().startsWith('guar://')) return trimmed
+  return trimmed.match(DEEP_LINK_PATTERN)?.[0]
+}
+
 function getDeepLinkFromArgs(argv: string[]): string | undefined {
-  return argv.find(
-    (arg) =>
-      arg.startsWith('clash://') || arg.startsWith('mihomo://') || arg.startsWith('koala-clash://')
-  )
+  for (const arg of argv) {
+    const url = normalizeDeepLink(arg)
+    if (url) return url
+  }
+  return undefined
+}
+
+function consumeDeepLinkFromTaskParam(): string | undefined {
+  const paramPath = path.join(taskDir(), 'param.txt')
+  try {
+    if (!existsSync(paramPath)) return undefined
+    const url = normalizeDeepLink(readFileSync(paramPath, 'utf-8'))
+    if (url) {
+      writeFileSync(paramPath, 'empty')
+    }
+    return url
+  } catch {
+    return undefined
+  }
+}
+
+function queueDeepLink(url: string): void {
+  pendingDeepLink = url
+  void flushPendingDeepLink()
+}
+
+async function flushPendingDeepLink(): Promise<void> {
+  if (
+    handlingPendingDeepLink ||
+    !pendingDeepLink ||
+    !coreReadyForDeepLinks
+  ) {
+    return
+  }
+
+  const url = pendingDeepLink
+  pendingDeepLink = null
+  handlingPendingDeepLink = true
+  try {
+    await handleDeepLink(url)
+  } finally {
+    handlingPendingDeepLink = false
+    if (pendingDeepLink) {
+      void flushPendingDeepLink()
+    }
+  }
 }
 
 app.on('second-instance', async (_event, commandline) => {
-  showMainWindow()
-  const url = getDeepLinkFromArgs(commandline)
+  const url = getDeepLinkFromArgs(commandline) ?? consumeDeepLinkFromTaskParam()
   if (url) {
-    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isLoading()) {
-      await handleDeepLink(url)
-    } else {
-      pendingDeepLink = url
-    }
+    queueDeepLink(url)
   }
+  await showMainWindow()
+  void flushPendingDeepLink()
 })
 
-app.on('open-url', async (_event, url) => {
-  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isLoading()) {
+app.on('open-url', async (event, url) => {
+  event.preventDefault()
+  queueDeepLink(url)
+  if (app.isReady()) {
     await showMainWindow()
-    await handleDeepLink(url)
-  } else {
-    pendingDeepLink = url
+    void flushPendingDeepLink()
   }
 })
 
@@ -277,7 +336,7 @@ powerMonitor.on('shutdown', async () => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('koala-clash.app')
+  electronApp.setAppUserModelId('com.guar.clash')
   try {
     await initPromise
   } catch (e) {
@@ -297,9 +356,9 @@ app.whenReady().then(async () => {
 
   // Check process.argv for deep link URL (cold start on Windows/Linux)
   if (!pendingDeepLink) {
-    const deepLinkArg = getDeepLinkFromArgs(process.argv)
+    const deepLinkArg = getDeepLinkFromArgs(process.argv) ?? consumeDeepLinkFromTaskParam()
     if (deepLinkArg) {
-      pendingDeepLink = deepLinkArg
+      queueDeepLink(deepLinkArg)
     }
   }
 
@@ -322,6 +381,8 @@ app.whenReady().then(async () => {
         await initProfileUpdater()
       })
       coreStarted = true
+      coreReadyForDeepLinks = true
+      void flushPendingDeepLink()
     } catch (e) {
       showError(t('dialog.coreStartError'), `${e}`)
     }
@@ -358,15 +419,11 @@ app.whenReady().then(async () => {
 })
 
 async function handleDeepLink(url: string): Promise<void> {
-  if (
-    !url.startsWith('clash://') &&
-    !url.startsWith('mihomo://') &&
-    !url.startsWith('koala-clash://')
-  )
-    return
+  if (!url.toLowerCase().startsWith('guar://')) return
 
   const urlObj = new URL(url)
-  switch (urlObj.host) {
+  const action = (urlObj.host || urlObj.pathname.replace(/^\/+/, '')).toLowerCase()
+  switch (action) {
     case 'install-config': {
       try {
         const profileUrl = urlObj.searchParams.get('url')
@@ -375,82 +432,26 @@ async function handleDeepLink(url: string): Promise<void> {
           throw new Error(t('error.missingUrlParam'))
         }
 
-        const confirmed = await showProfileInstallConfirm(profileUrl, profileName)
-
-        if (confirmed) {
-          await addProfileItem({
-            type: 'remote',
-            name: profileName ?? undefined,
-            url: profileUrl
-          })
-          mainWindow?.webContents.send('profileConfigUpdated')
-          new Notification({ title: t('notification.profileImportSuccess') }).show()
+        await addProfileItem({
+          type: 'remote',
+          name: profileName ?? undefined,
+          url: profileUrl
+        })
+        if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isLoading()) {
+          mainWindow.webContents.send('profileConfigUpdated')
         }
+        ipcMain.emit('updateTrayMenu')
+        new Notification({ title: t('notification.profileImportSuccess') }).show()
       } catch (e) {
         const hwidLimitMatch = `${e}`.match(/HWID_LIMIT:(.*)/)
         if (hwidLimitMatch && mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('show-hwid-limit-error', hwidLimitMatch[1].trim())
           return
         }
-        showError(t('dialog.profileImportFailed'), `${url}\n${e}`)
+        showError(t('dialog.profileImportFailed'), `${e}`)
       }
       break
     }
-  }
-}
-
-async function showProfileInstallConfirm(url: string, name?: string | null): Promise<boolean> {
-  if (!mainWindow) {
-    await createWindow()
-  }
-  let extractedName = name
-
-  if (!extractedName) {
-    try {
-      const axios = (await import('axios')).default
-      const response = await axios.head(url, {
-        timeout: 5000
-      })
-
-      if (response.headers['profile-title']) {
-        const titleValue = response.headers['profile-title']
-        if (titleValue.startsWith('base64:')) {
-          extractedName = Buffer.from(titleValue.slice(7), 'base64').toString('utf-8')
-        } else {
-          extractedName = titleValue
-        }
-      } else {
-        if (response.headers['content-disposition']) {
-          extractedName = parseFilename(response.headers['content-disposition'])
-        }
-      }
-    } catch (error) {
-      // ignore
-    }
-  }
-
-  return new Promise((resolve) => {
-    const delay = showWindow()
-    setTimeout(() => {
-      mainWindow?.webContents.send('show-profile-install-confirm', {
-        url,
-        name: extractedName || name
-      })
-      const handleConfirm = (_event: Electron.IpcMainEvent, confirmed: boolean): void => {
-        ipcMain.off('profile-install-confirm-result', handleConfirm)
-        resolve(confirmed)
-      }
-      ipcMain.once('profile-install-confirm-result', handleConfirm)
-    }, delay)
-  })
-}
-
-function parseFilename(str: string): string {
-  if (str.match(/filename\*=.*''/)) {
-    return decodeURIComponent(str.split(/filename\*=.*''/)[1])
-  } else {
-    const filename = str.split('filename=')[1]
-    return filename?.replace(/"/g, '') || ''
   }
 }
 
@@ -468,12 +469,13 @@ export async function createWindow(appConfig?: AppConfig): Promise<void> {
   try {
     const config = appConfig ?? (await getAppConfig())
     const { useWindowFrame = false } = config
+    const windowLayout = getWindowLayout()
 
     const [mainWindowState] = await Promise.all([
       Promise.resolve(
         windowStateKeeper({
-          defaultWidth: 800,
-          defaultHeight: 700,
+          defaultWidth: windowLayout.width,
+          defaultHeight: windowLayout.height,
           file: 'window-state.json'
         })
       ),
@@ -482,19 +484,28 @@ export async function createWindow(appConfig?: AppConfig): Promise<void> {
         : Promise.resolve(Menu.setApplicationMenu(null))
     ])
     mainWindow = new BrowserWindow({
-      minWidth: 800,
-      minHeight: 600,
-      width: mainWindowState.width,
-      height: mainWindowState.height,
-      x: mainWindowState.x,
-      y: mainWindowState.y,
+      minWidth: windowLayout.width,
+      minHeight: windowLayout.height,
+      maxWidth: windowLayout.width,
+      maxHeight: windowLayout.height,
+      width: windowLayout.width,
+      height: windowLayout.height,
+      x: undefined,
+      y: undefined,
+      center: true,
       show: false,
       frame: useWindowFrame,
+      resizable: false,
+      maximizable: false,
       fullscreenable: false,
       titleBarStyle: useWindowFrame ? 'default' : 'hidden',
       titleBarOverlay: false,
       autoHideMenuBar: true,
-      ...(process.platform === 'linux' ? { icon: icon } : {}),
+      ...(process.platform === 'win32'
+        ? { icon: icoIcon }
+        : process.platform === 'linux'
+          ? { icon: pngIcon }
+          : {}),
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         spellcheck: false,
@@ -505,12 +516,9 @@ export async function createWindow(appConfig?: AppConfig): Promise<void> {
     if (process.platform === 'darwin' && !useWindowFrame) {
       mainWindow.setWindowButtonVisibility(false)
     }
-    mainWindow.on('maximize', () => {
-      mainWindow?.webContents.send('window-maximized')
-    })
     mainWindow.on('ready-to-show', async () => {
       const { silentStart = false } = await getAppConfig()
-      if (!silentStart) {
+      if (!silentStart || pendingDeepLink) {
         if (quitTimeout) {
           clearTimeout(quitTimeout)
         }
@@ -563,14 +571,8 @@ export async function createWindow(appConfig?: AppConfig): Promise<void> {
       }
     })
 
-    mainWindow.webContents.once('did-finish-load', () => {
-      if (pendingDeepLink) {
-        const url = pendingDeepLink
-        pendingDeepLink = null
-        setTimeout(() => {
-          handleDeepLink(url)
-        }, 500)
-      }
+    mainWindow.webContents.on('did-finish-load', () => {
+      void flushPendingDeepLink()
     })
 
     mainWindow.on('close', async (event) => {
@@ -587,11 +589,6 @@ export async function createWindow(appConfig?: AppConfig): Promise<void> {
 
     mainWindow.on('resized', () => {
       if (mainWindow) mainWindowState.saveState(mainWindow)
-    })
-
-    mainWindow.on('unmaximize', () => {
-      if (mainWindow) mainWindowState.saveState(mainWindow)
-      mainWindow?.webContents.send('window-unmaximized')
     })
 
     mainWindow.on('move', () => {

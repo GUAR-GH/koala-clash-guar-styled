@@ -2,7 +2,6 @@ import { toast } from 'sonner'
 import { Button } from '@renderer/components/ui/button'
 import BasePage from '@renderer/components/base/base-page'
 import ProfileItem from '@renderer/components/profiles/profile-item'
-import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import { readTextFile } from '@renderer/utils/ipc'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -16,7 +15,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext } from '@dnd-kit/sortable'
 import { useTranslation } from 'react-i18next'
-import { Plus, FileDown, RefreshCcw } from 'lucide-react'
+import { FileDown, RefreshCcw } from 'lucide-react'
 
 const emptyItems: ProfileItem[] = []
 
@@ -36,8 +35,6 @@ const Profiles: React.FC = () => {
   const [updating, setUpdating] = useState(false)
   const [switching, setSwitching] = useState(false)
   const [fileOver, setFileOver] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [editingItem, setEditingItem] = useState<ProfileItem | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -137,33 +134,12 @@ const Profiles: React.FC = () => {
     setSortedItems(itemsArray)
   }, [itemsArray])
 
-  const handleAddProfile = (): void => {
-    const newProfile: ProfileItem = {
-      id: '',
-      name: '',
-      type: 'remote',
-      url: '',
-      useProxy: false,
-      autoUpdate: true
-    }
-    setEditingItem(newProfile)
-    setShowEditModal(true)
-  }
-
   return (
     <BasePage
       ref={pageRef}
       title={t('pages.profiles.title')}
       header={
         <>
-          <Button
-            className="new-profile app-nodrag"
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleAddProfile}
-          >
-            <Plus />
-          </Button>
           <Button
             size="icon-sm"
             title={t('pages.profiles.updateAll')}
@@ -189,24 +165,10 @@ const Profiles: React.FC = () => {
         </>
       }
     >
-      {showEditModal && editingItem && (
-        <EditInfoModal
-          item={editingItem}
-          isCurrent={editingItem.id === current}
-          updateProfileItem={async (item: ProfileItem) => {
-            await addProfileItem(item)
-          }}
-          onClose={() => {
-            setShowEditModal(false)
-            setEditingItem(null)
-          }}
-        />
-      )}
-
       {/* File drop overlay */}
       {fileOver && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
-          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 px-12 py-8">
+          <div className="flex flex-col items-center gap-3 rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 px-12 py-8">
             <FileDown className="size-10 text-primary" />
             <span className="text-sm font-medium text-primary">
               {t('pages.profiles.dropFileHint')}
@@ -217,14 +179,9 @@ const Profiles: React.FC = () => {
 
       {sortedItems.length === 0 ? (
         <div className="h-full w-full flex justify-center items-center">
-          <div className="flex flex-col items-center gap-3">
-            <Button className="rounded-full w-20 h-20 hover:bg-card" variant="outline" onClick={handleAddProfile}>
-              <Plus className="text-muted-foreground size-10" />
-            </Button>
-            <h2 className="text-muted-foreground text-lg font-medium">
-              {t('pages.profiles.emptyTitle')}
-            </h2>
-            <p className="text-muted-foreground/70 text-sm">
+          <div className="flex max-w-72 flex-col items-center gap-3 px-6 text-center">
+            <h2 className="text-muted-foreground text-lg font-medium">{t('pages.profiles.emptyTitle')}</h2>
+            <p className="text-muted-foreground/70 text-sm whitespace-pre-line">
               {t('pages.profiles.emptyDescription')}
             </p>
           </div>

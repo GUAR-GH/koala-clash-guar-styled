@@ -54,12 +54,12 @@ const ProcessItemComponent: React.FC<Props> = ({ process, displayIcon, onClick }
     <div className="px-2 pb-2" style={{ height: 72 }}>
       <div
         className={`
-          w-full h-full flex items-center cursor-pointer rounded-xl border
+          glass-surface w-full h-full flex items-center cursor-pointer rounded-lg
           transition-all duration-200 ease-out
           ${
             hasActive
-              ? 'border-stroke-power-on/30 bg-linear-to-r from-gradient-start-power-on/[0.06] to-card/40 hover:border-stroke-power-on/50 shadow-sm'
-              : 'border-border bg-card/40 hover:bg-accent/50'
+              ? 'border-stroke-power-on/35 bg-linear-to-r from-gradient-start-power-on/[0.08] to-card/40 hover:border-stroke-power-on/55'
+              : 'hover:bg-accent/50'
           }
         `}
         onClick={() => onClick(process.processPath)}
