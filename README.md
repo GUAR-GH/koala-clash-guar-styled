@@ -1,101 +1,145 @@
-# Koala Clash
+# GUAR
+
 <p align="center">
-  <img src="./build/icon.png" alt="Clash" width="128" />
+  <img src="./build/icon.png" alt="GUAR" width="128" />
   <br>
   <br>
-  <a href="https://github.com/coolcoala/koala-clash/releases">
-    <img src="https://img.shields.io/github/release/coolcoala/koala-clash/all.svg">
+  <a href="https://github.com/GUAR-GH/GUAR/releases">
+    <img src="https://img.shields.io/github/release/GUAR-GH/GUAR/all.svg" alt="Releases">
   </a>
 </p>
-<h3 align="center">GUI client for <a href="https://github.com/MetaCubeX/mihomo">Mihomo</a></h3>
 
-## Features
+<h3 align="center">GUAR Clash - визуальный форк Koala Clash для <a href="https://github.com/MetaCubeX/mihomo">Mihomo</a></h3>
 
-- [x] Out-of-the-box Tun mode without service mode
-- [x] Multiple color themes
-- [x] Support for most Mihomo configuration options
-- [x] Built-in Mihomo cores (stable and alpha)
+## Что это
 
-## Screenshots
+`GUAR` - это визуальный форк `Koala Clash`, адаптированный под экосистему GUAR.
+По функциональности приложение остается совместимым с оригинальной идеей Koala Clash, но интерфейс, брендинг и сценарии использования подстроены под проект GUAR.
+
+Это не попытка "переписать все с нуля", а аккуратный форк с сохранением сильных сторон исходного клиента.
+
+## Что изменено в форке
+
+- Компактный интерфейс без лишних режимов и переключений.
+- Импорт подписки по `guar://` происходит сразу, без отдельного окна подтверждения.
+- Приложение устанавливается как отдельный продукт `GUAR Clash`.
+- Автообновления из оригинального репозитория отключены, чтобы форк не подтягивал чужие релизы.
+- Визуальная часть и пользовательский сценарий упрощены под использование с сервисом GUAR.
+
+## Скриншот
+
 ![Preview](./docs/preview.png)
 
-## Development
+## Установка
 
-### Requirements
+Для Windows в релизах достаточно двух файлов:
 
-- **Node.js** >= 20.0.0
-- **pnpm** >= 9.0.0
-- **Git**
+- `GUAR Clash_x64-setup.exe` - обычный установщик
+- `GUAR Clash_x64-portable.7z` - портативная версия без установки
 
-### Tech Stack
+### Вариант 1. Установщик
 
-Koala Clash is built with Electron + React + TypeScript.
+1. Скачайте `GUAR Clash_x64-setup.exe` со страницы [Releases](https://github.com/GUAR-GH/GUAR/releases).
+2. Запустите установщик и завершите стандартную установку.
+3. После установки приложение появится в меню "Пуск" как `GUAR Clash`.
 
-**Frontend:** React 19, shadcn/UI, Tailwind CSS, Monaco Editor
+### Вариант 2. Portable
 
-**Backend:** Electron, Mihomo Core, sysproxy-go
+1. Скачайте `GUAR Clash_x64-portable.7z`.
+2. Распакуйте архив в любую папку.
+3. Запустите `GUAR Clash.exe`.
 
-### Quick Start
+### Если Windows показывает предупреждение
+
+Сборка может показывать предупреждение `SmartScreen`, потому что приложение не подписано платным сертификатом кода.
+Это типичное поведение для небольших open-source проектов на Electron и само по себе не означает наличие вируса.
+
+Если файл скачан с официальной страницы релизов этого репозитория, можно нажать `Подробнее` -> `Выполнить в любом случае`.
+
+## Почему проекту можно доверять
+
+Абсолютно "доказать отсутствие вирусов" одной фразой невозможно, но у пользователя есть несколько нормальных способов проверить проект самостоятельно:
+
+- Исходный код открыт и полностью лежит в этом репозитории.
+- Приложение можно собрать локально из исходников и сравнить поведение со скачанным релизом.
+- В этом форке отключены автообновления, поэтому приложение не подтягивает бинарники из оригинального репозитория Koala Clash.
+- Состав проекта прозрачен: это Electron-приложение с GUI для Mihomo, без закрытого лаунчера и без скрытой логики обновления.
+- Любой релиз можно дополнительно проверить локальным антивирусом или загрузить на [VirusTotal](https://www.virustotal.com/gui/home/upload).
+
+Для ручной проверки хэша в Windows можно использовать:
+
+```powershell
+Get-FileHash ".\GUAR Clash_x64-setup.exe" -Algorithm SHA256
+Get-FileHash ".\GUAR Clash_x64-portable.7z" -Algorithm SHA256
+```
+
+Если вы хотите максимальной прозрачности, лучший вариант - собрать приложение самостоятельно из этого репозитория.
+
+## Deeplink для импорта подписки
+
+Форк поддерживает прямой импорт подписки по схеме:
+
+```text
+guar://install-config?url=https%3A%2F%2Fexample.com%2Fconnect%2Ftoken&name=GUAR
+```
+
+Где:
+
+- `url` - закодированная ссылка на подписку
+- `name` - необязательное имя профиля
+
+Пример:
+
+```text
+guar://install-config?url=https%3A%2F%2Fgateway.guar.one%2Fconnect%2FSkttYWtlLDE3NzY1NjM3NTERDo39ySmo2&name=GUAR
+```
+
+## Разработка
+
+### Требования
+
+- `Node.js` 20+
+- `pnpm` 10+ или `npm`
+- `Git`
+
+### Быстрый старт
 
 ```bash
-git clone https://github.com/coolcoala/koala-clash.git
-cd koala-clash
+git clone https://github.com/GUAR-GH/GUAR.git
+cd GUAR
 pnpm install
 pnpm dev
 ```
 
-If Electron fails to install:
+Если удобнее через `npm`, основные команды тоже работают:
 
 ```bash
-cd node_modules/electron && node install.js && cd ../..
+npm install
+npm run dev
 ```
 
-### Project Structure
-
-```
-src/
-├── main/               # Electron main process
-│   ├── core/           # Mihomo core management
-│   ├── config/         # Configuration management
-│   ├── resolve/        # Tray, shortcuts, auto-updater, floating window
-│   ├── sys/            # System integration (sysproxy, autorun)
-│   └── utils/          # Utilities
-├── renderer/           # React frontend
-│   └── src/
-│       ├── components/ # React components
-│       ├── pages/      # Page components
-│       ├── hooks/      # Hooks and context providers
-│       └── utils/      # Frontend utilities
-├── preload/            # Preload scripts (IPC bridge)
-└── shared/types/       # Shared TypeScript types
-```
-
-### Commands
-
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server (renderer hot reloads, main requires restart) |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Run Prettier |
-| `pnpm typecheck` | TypeScript type checking |
-| `pnpm build:win` | Build for Windows |
-| `pnpm build:mac` | Build for macOS |
-| `pnpm build:linux` | Build for Linux |
-
-Architecture and format can be specified via flags:
+### Сборка
 
 ```bash
-pnpm build:win nsis --x64
-pnpm build:mac pkg --arm64
-pnpm build:linux deb --x64
+npm run typecheck
+npm run build:win
 ```
 
-### Build Artifacts
+Готовые файлы сборки появятся в папке `dist/`.
 
-- **Windows**: `.exe` (NSIS installer), `.7z` (portable)
-- **macOS**: `.pkg`
-- **Linux**: `.deb`, `.rpm`, `.pkg.tar.xz` (pacman)
+## Стек
 
-## Credits
+- `Electron`
+- `React`
+- `TypeScript`
+- `Mihomo`
 
-Based on [Sparkle](https://github.com/xishang0128/sparkle) by [xishang0128](https://github.com/xishang0128).
+## Благодарность авторам
+
+Этот проект появился благодаря работе авторов исходных проектов:
+
+- [coolcoala/koala-clash](https://github.com/coolcoala/koala-clash) - основа текущего форка
+- [xishang0128/sparkle](https://github.com/xishang0128/sparkle) - проект, на котором изначально базировался Koala Clash
+
+Если вам нравится `GUAR`, пожалуйста, не забывайте и про авторов оригинального софта.
+Без их работы этого форка бы не было.
