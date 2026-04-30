@@ -97,7 +97,12 @@ const zhCN: LocaleTranslations = {
     appInitFailed: '应用初始化失败',
     coreStartError: '内核启动出错',
     profileImportFailed: '订阅导入失败',
-    selectSubscriptionFile: '选择订阅文件'
+    selectSubscriptionFile: '选择订阅文件',
+    updateAvailable: '发现新版本',
+    currentVersion: '当前版本',
+    latestVersion: '最新版本',
+    downloadUpdate: '下载更新',
+    later: '稍后'
   },
   error: {
     missingUrlParam: '缺少参数 url',
@@ -237,7 +242,12 @@ const enUS: LocaleTranslations = {
     appInitFailed: 'Application initialization failed',
     coreStartError: 'Core startup error',
     profileImportFailed: 'Profile import failed',
-    selectSubscriptionFile: 'Select subscription file'
+    selectSubscriptionFile: 'Select subscription file',
+    updateAvailable: 'Update available',
+    currentVersion: 'Current version',
+    latestVersion: 'Latest version',
+    downloadUpdate: 'Download update',
+    later: 'Later'
   },
   error: {
     missingUrlParam: 'Missing parameter: url',
@@ -377,7 +387,12 @@ const ruRU: LocaleTranslations = {
     appInitFailed: 'Ошибка инициализации приложения',
     coreStartError: 'Ошибка запуска ядра',
     profileImportFailed: 'Ошибка импорта подписки',
-    selectSubscriptionFile: 'Выберите файл подписки'
+    selectSubscriptionFile: 'Выберите файл подписки',
+    updateAvailable: 'Доступно обновление',
+    currentVersion: 'Текущая версия',
+    latestVersion: 'Новая версия',
+    downloadUpdate: 'Скачать обновление',
+    later: 'Позже'
   },
   error: {
     missingUrlParam: 'Отсутствует параметр: url',

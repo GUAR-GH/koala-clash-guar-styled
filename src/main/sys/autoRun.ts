@@ -1,12 +1,14 @@
-import { exePath, homeDir, taskDir } from '../utils/dirs'
+import { exePath, homeDir, resourcesFilesDir, taskDir } from '../utils/dirs'
 import { execWithElevation } from '../utils/elevation'
-import { mkdir, readFile, rm, writeFile } from 'fs/promises'
+import { copyFile, mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { execFile } from 'child_process'
 import { existsSync } from 'fs'
 import { promisify } from 'util'
 import path from 'path'
 
 const appName = 'guar-clash'
+const taskRunner = 'guar-clash-run.exe'
+const sourceTaskRunner = 'koala-clash-run.exe'
 
 const taskXml = `<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -43,7 +45,7 @@ const taskXml = `<?xml version="1.0" encoding="UTF-16"?>
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>"${path.join(taskDir(), `guar-clash-run.exe`)}"</Command>
+      <Command>"${path.join(taskDir(), taskRunner)}"</Command>
       <Arguments>"${exePath()}"</Arguments>
     </Exec>
   </Actions>
@@ -79,6 +81,10 @@ export async function checkAutoRun(): Promise<boolean> {
 export async function enableAutoRun(): Promise<void> {
   if (process.platform === 'win32') {
     const taskFilePath = path.join(taskDir(), `${appName}.xml`)
+    await copyFile(
+      path.join(resourcesFilesDir(), sourceTaskRunner),
+      path.join(taskDir(), taskRunner)
+    )
     await writeFile(taskFilePath, Buffer.from(`\ufeff${taskXml}`, 'utf-16le'))
     await execWithElevation('schtasks.exe', [
       '/create',

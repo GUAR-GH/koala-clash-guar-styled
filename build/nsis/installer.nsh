@@ -21,6 +21,7 @@
 
 !macro customInstall
   ; Remove stale elevated runner tasks from dev/old builds before the app recreates them.
+  ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "guar-clash" /F'
   ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "guar-clash-run" /F'
   ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "koala-clash-run" /F'
 
@@ -36,6 +37,7 @@
 
 !macro customUnInstall
   ; Clean up elevated runner tasks so future installs cannot launch an old exe path.
+  ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "guar-clash" /F'
   ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "guar-clash-run" /F'
   ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "koala-clash-run" /F'
 !macroend

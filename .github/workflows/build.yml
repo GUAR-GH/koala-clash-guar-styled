@@ -93,7 +93,7 @@ jobs:
       - name: Correct folder name on Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sed -i "s/productName: Koala Clash/productName: Koala.Clash/" electron-builder.yml
+          sed -i "s/productName: GUAR Clash/productName: GUAR.Clash/" electron-builder.yml
 
       - name: Install Build Tools
         if: matrix.os == 'ubuntu-latest' && matrix.format == 'pacman'
@@ -153,7 +153,7 @@ jobs:
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}${{ matrix.format && '-' || '' }}${{ matrix.format || '' }}
           path: |
-            dist/[Kk]oala?[Cc]lash*
+            dist/GUAR*
             !dist/*.plist
             !dist/*blockmap*
             latest.yml
@@ -208,21 +208,37 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'true'
 
-      - name: Update Version
+      - name: Normalize Release Version
+        id: release_version
+        shell: bash
         run: |
           INPUT_VERSION="${{ github.event.inputs.version }}"
+          if [[ "$INPUT_VERSION" == "" ]]; then
+            INPUT_VERSION="${GITHUB_REF_NAME}"
+          fi
+
           CLEAN_VERSION=$(echo "$INPUT_VERSION" | sed 's/^v//')
           if [[ ! "$CLEAN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Invalid version format: $INPUT_VERSION"
             exit 1
           fi
+
+          echo "version=$CLEAN_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update Version
+        run: |
+          CLEAN_VERSION="${{ steps.release_version.outputs.version }}"
           jq --arg version "$CLEAN_VERSION" '.version = $version' package.json > tmp.json && mv tmp.json package.json
 
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git add package.json
-          git commit -m "update version to $CLEAN_VERSION"
-          git push
+          if git diff --cached --quiet; then
+            echo "package.json already uses $CLEAN_VERSION"
+          else
+            git commit -m "update version to $CLEAN_VERSION"
+            git push
+          fi
 
       - name: Install Dependencies and Updater
         run: |
@@ -239,14 +255,14 @@ jobs:
         uses: 8Mi-Tech/delete-release-assets-action@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.event.inputs.version != '' && github.event.inputs.version || github.ref }}
+          tag: ${{ steps.release_version.outputs.version }}
           deleteOnlyFromDrafts: false
 
       - name: Publish Release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version != '' && github.event.inputs.version || github.ref }}
+          tag_name: ${{ steps.release_version.outputs.version }}
           body_path: changelog.md
           files: |
             latest.yml
@@ -258,4 +274,5 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           GROUP_ID: ${{ secrets.TELEGRAM_TO_GROUP }}
           CHANNEL_ID: ${{ secrets.TELEGRAM_TO_CHANNEL }}
+          RELEASE_TAG: ${{ steps.release_version.outputs.version }}
         run: pnpm telegram
